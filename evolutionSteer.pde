@@ -850,6 +850,11 @@ void drawStatusWindow(boolean isFirstFrame) {
     }
   }
 }
+
+void settings() {
+  size((int)(windowWidth*windowSizeMultiplier), (int)(windowHeight*windowSizeMultiplier),P3D);
+}
+
 void setup() {
   String[] prePatronData = loadStrings("PatronReport_2017-06-12.csv");
   patronData = new String[PATRON_COUNT];
@@ -866,7 +871,6 @@ void setup() {
   frameRate(60);
   randomSeed(SEED);
   noSmooth();
-  size((int)(windowWidth*windowSizeMultiplier), (int)(windowHeight*windowSizeMultiplier),P3D);
   ellipseMode(CENTER);
   Float[] beginPercentile = new Float[29];
   Integer[] beginBar = new Integer[barLen];
