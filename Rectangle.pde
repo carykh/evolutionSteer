@@ -6,4 +6,6 @@ class Rectangle {
     x2 = tx2;
     y2 = ty2;
   }
+  
+  
 }
