@@ -44,7 +44,7 @@ class Creature {
     }
   }
   int getBrainHeight(){
-    return n.size()+m.size()+1;
+    return n.size()+m.size()+2;
   }
   void changeBrainStructure(int rowInsertionIndex, int rowRemovalIndex){
     brain.changeBrainStructure(BRAIN_WIDTH, getBrainHeight(), rowInsertionIndex,rowRemovalIndex);
