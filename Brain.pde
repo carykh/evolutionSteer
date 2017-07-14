@@ -1,4 +1,7 @@
 class Brain {
+  float heartbeatStrength = 10;
+  float heartbeatInterval = 0.1;
+  float timesUsed = 0;
   float[][] neurons;
   Axon[][][] axons;
   int BRAIN_WIDTH = 0;
@@ -86,10 +89,16 @@ class Brain {
   public void useBrain(Creature owner){
     ArrayList<Node> n = owner.n;
     ArrayList<Muscle> m = owner.m;
-    for(int i = 0; i < n.size(); i++){
-      Node ni = n.get(i);
+    
+    for(int i = 1; i < n.size(); i++){
+      Node ni = n.get(i - 1);
       neurons[0][i] = dist(ni.x, ni.y, ni.z, foodX, foodY, foodZ);
     }
+    
+    neurons[0][0] = ((sin(timesUsed) / 2) + 0.5) * heartbeatStrength;
+    
+    timesUsed += heartbeatInterval;
+    
     for(int i = 0; i < m.size(); i++){
       Muscle am = m.get(i);
       Node ni1 = n.get(am.c1);
