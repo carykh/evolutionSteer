@@ -9,6 +9,16 @@ class Creature {
   Brain brain;
   int[] name;
   float[][] foodPositions = new float[100][3];
+  float foodAngle = 0.0;
+  float foodX = 0;
+  float foodY = 0;
+  float foodZ = 0;
+  int chomps = 0;
+  float averageX = 0;
+  float averageY = 0;
+  float averageZ = 0;
+  float energy = baselineEnergy;
+  
   Creature(int[] tname, int tid, ArrayList<Node> tn, ArrayList<Muscle> tm, float td, boolean talive, float tct, float tmut, Brain newBrain, float[][] tfoodpos) {
     id = tid;
     m = tm;
@@ -270,10 +280,68 @@ class Creature {
       img.popMatrix();
     }
   }
+  void setAverages() {
+    averageX = 0;
+    averageY = 0;
+    averageZ = 0;
+    for (int i = 0; i < currentCreature.n.size(); i++) {
+      Node ni = currentCreature.n.get(i);
+      averageX += ni.x;
+      averageY += ni.y;
+      averageZ += ni.z;
+    }
+    averageX = averageX/currentCreature.n.size();
+    averageY = averageY/currentCreature.n.size();
+    averageZ = averageZ/currentCreature.n.size();
+  }
+  void calculateNextFoodLocation() {
+    setAverages();
+    foodAngle += currentCreature.foodPositions[chomps][0];
+    float sinA = sin(foodAngle);
+    float cosA = cos(foodAngle);
+    float furthestNodeForward = 0;
+    for(int i = 0; i < currentCreature.n.size(); i++){
+      Node ni = currentCreature.n.get(i);
+      float newX = (ni.x-averageX)*cosA-(ni.z-averageZ)*sinA;
+      if(newX >= furthestNodeForward){
+        furthestNodeForward = newX;
+      }
+    }
+    float d = MIN_FOOD_DISTANCE+(MAX_FOOD_DISTANCE-MIN_FOOD_DISTANCE)*currentCreature.foodPositions[chomps][2];
+    foodX = foodX+cos(foodAngle)*(furthestNodeForward+d);
+    foodZ = foodZ+sin(foodAngle)*(furthestNodeForward+d);
+    foodY = currentCreature.foodPositions[chomps][1];
+    startingFoodDistance = getCurrentFoodDistance();
+  }
+  float getCurrentFoodDistance() {
+    float closestDist = 9999;
+    for(int i = 0; i <n.size(); i++){
+      Node N = n.get(i);
+      float distFromFood = dist(N.x,N.y,N.z,foodX,foodY,foodZ)-0.4;
+      if(distFromFood < closestDist){
+        closestDist = distFromFood;
+      }
+    }
+    return closestDist;
+  }
+  float getFitness(){
+    Boolean hasNodeOffGround = false;
+    for(int i = 0; i < n.size(); i++){
+      if(n.get(i).y <= -0.2001){
+        hasNodeOffGround = true;
+      }
+    }
+    if(hasNodeOffGround){
+      float withinChomp = max(1.0-getCurrentFoodDistance()/startingFoodDistance,0);
+      return chomps+withinChomp;//cumulativeAngularVelocity/(n.size()-2)/pow(averageNodeNausea,0.3);//   /(2*PI)/(n.size()-2); //dist(0,0,averageX,averageZ)*0.2; // Multiply by 0.2 because a meter is 5 units for some weird reason.
+    }else{
+      return 0;
+    }
+  }
   void toStableConfiguration() {
     for (int j = 0; j < 200; j++) {
       for (int i = 0; i < m.size(); i++) {
-        m.get(i).applyForce(i, n);
+        m.get(i).applyForce(i, n, this);
       }
       for (int i = 0; i < n.size(); i++) {
         n.get(i).applyForces();
@@ -288,7 +356,7 @@ class Creature {
     boolean hasEaten = false;
     brain.useBrain(this);
     for (int i = 0; i < m.size(); i++) {
-      m.get(i).applyForce(i, n);
+      m.get(i).applyForce(i, n, this);
     }
     for (int i = 0; i < n.size(); i++) {
       Node ni = n.get(i);
@@ -299,7 +367,7 @@ class Creature {
       if(distFromFood <= 0.4){
         chomps++;
         if (chomps < 10){ hasEaten = true; }
-        setFoodLocation();
+        calculateNextFoodLocation();
       }
     }
     return hasEaten;
