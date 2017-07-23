@@ -110,6 +110,8 @@ int radioactiveNumber = 400; // number of highly mutated creatures
 int freshBloodNumber = 0; // number of brand new creatures
 float radioactiveMutator = 1.5;
 
+boolean massExtinction = false;
+
 String[] patronData;
 int PATRON_COUNT = 75;
 float TOTAL_PLEDGED = 183.39;
@@ -1025,6 +1027,9 @@ void draw() {
       //  saveFrame("imgs//"+zeros(gen,5)+".png");
       //  lastImageSaved = gen;
       //}
+      if(massExtinction){
+         text("MASS EXTINCTION", 400, 210);
+      }
     }
     if (gensToDo >= 1) {
       gensToDo--;
@@ -1336,13 +1341,18 @@ void draw() {
       Creature cj = c2.get(j2);
       Creature cj2 = c2.get(nbCreatures-1-j2);
       
-      c2.set(j2, cj.copyCreature(cj.id+nbCreatures,true,false));        //duplicate
-      if(enableRadioactivity && j >= nbCreatures/2 - freshBloodNumber) {
-        c2.set(nbCreatures-1-j2, createNewCreature(cj2.id+nbCreatures-1));   //brand new creatures  
-      } else if(enableRadioactivity && j >= nbCreatures/2 - radioactiveNumber - freshBloodNumber){
-        c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, radioactiveMutator));   //radioactive offspring        
+      if(massExtinction && random(0,1) < 0.5){ // mass extinction
+        c2.set(j2, createNewCreature(cj.id+nbCreatures-1)); // new creatures arises !
+        c2.set(nbCreatures-1-j2, createNewCreature(cj2.id+nbCreatures-1));
       } else {
-        c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, 1.0));   //mutated offspring 1
+        c2.set(j2, cj.copyCreature(cj.id+nbCreatures,true,false));        //duplicate
+        if(enableRadioactivity && j >= nbCreatures/2 - freshBloodNumber) {
+          c2.set(nbCreatures-1-j2, createNewCreature(cj2.id+nbCreatures-1));   //brand new creatures  
+        } else if(enableRadioactivity && j >= nbCreatures/2 - radioactiveNumber - freshBloodNumber){
+          c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, radioactiveMutator));   //radioactive offspring        
+        } else {
+          c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, 1.0));   //mutated offspring 1
+        }
       }
     }
     for (int j = 0; j < nbCreatures; j++) {
@@ -1356,6 +1366,7 @@ void draw() {
     } else {
       setMenu(1);
     }
+    massExtinction = false;
   }
   if(menu%2 == 1 && abs(menu-10) <= 3){
     background(gridBGColor);
@@ -1487,6 +1498,10 @@ void keyPressed(){
   }
   if(key == 'r'){
     enableRadioactivity = !enableRadioactivity;
+    setMenu(1);
+  }
+  if(key == 'k'){
+    massExtinction = true;
     setMenu(1);
   }
 }
