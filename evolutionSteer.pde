@@ -102,9 +102,12 @@ int[] p = {
 final int BRAIN_WIDTH = 3;
 float STARTING_AXON_VARIABILITY = 1.0;
 float AXON_START_MUTABILITY = 0.0005;
+
 boolean enableRadioactivity = false;
-int radioactiveNumber = 50;
-float radioactiveMutator = 5;
+int radioactiveNumber = 200; // number of highly mutated creatures
+int freshBloodNumber = 0; // number of brand new creatures
+float radioactiveMutator = 1.5;
+
 String[] patronData;
 int PATRON_COUNT = 75;
 float TOTAL_PLEDGED = 183.39;
@@ -1002,36 +1005,7 @@ void draw() {
     creatures = 0;
     for (int y = 0; y < 25; y++) {
       for (int x = 0; x < 40; x++) {
-        int nodeNum = int(random(4, 8));
-        int muscleNum = int(random(nodeNum, nodeNum*3));
-        ArrayList<Node> n = new ArrayList<Node>(nodeNum);
-        ArrayList<Muscle> m = new ArrayList<Muscle>(muscleNum);
-        for (int i = 0; i < nodeNum; i++) {
-          n.add(new Node(random(-1, 1), random(-1, 1), random(-1, 1),
-          0, 0, 0, 0.4, random(0, 1))); //replaced all nodes' sizes with 0.4, used to be random(0.1,1), random(0,1)
-        }
-        for (int i = 0; i < muscleNum; i++) {
-          int tc1 = 0;
-          int tc2 = 0;
-          if (i < nodeNum-1) {
-            tc1 = i;
-            tc2 = i+1;
-          } else {
-            tc1 = int(random(0, nodeNum));
-            tc2 = tc1;
-            while (tc2 == tc1) {
-              tc2 = int(random(0, nodeNum));
-            }
-          }
-          float s = 0.8;
-          if (i >= 10) {
-            s *= 1.414;
-          }
-          float len = random(0.5,1.5);
-          m.add(new Muscle(tc1, tc2, len, random(0.015, 0.06)));
-        }
-        float heartbeat = random(40, 80);
-        c[y*40+x] = new Creature(null, y*40+x+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 0, true, heartbeat, 1.0, null, null);
+        c[y*40+x] = createNewCreature(y*40+x);
         c[y*40+x].checkForOverlap();
         c[y*40+x].checkForLoneNodes();
         c[y*40+x].toStableConfiguration();
@@ -1310,8 +1284,10 @@ void draw() {
       Creature cj2 = c2.get(999-j2);
       
       c2.set(j2, cj.copyCreature(cj.id+1000,true,false));        //duplicate
-      if(enableRadioactivity && j >= 500 - radioactiveNumber){
-        c2.set(999-j2, cj.modified(cj2.id+1000, radioactiveMutator));   //radioactive offspring        
+      if(enableRadioactivity && j >= nbCreatures/2 - freshBloodNumber) {
+        c2.set(nbCreatures-1-j2, createNewCreature(cj2.id+nbCreatures-1));   //brand new creatures  
+      } else if(enableRadioactivity && j >= nbCreatures/2 - radioactiveNumber - freshBloodNumber){
+        c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, radioactiveMutator));   //radioactive offspring        
       } else {
         c2.set(999-j2, cj.modified(cj2.id+1000, 1.0));   //mutated offspring 1
       }
@@ -1623,4 +1599,37 @@ float getFitness(){
 }
 void setFitness(int i){
   c[i].d = getFitness();
+}
+
+Creature createNewCreature(int index){
+  int nodeNum = int(random(4, 8));
+  int muscleNum = int(random(nodeNum, nodeNum*3));
+  ArrayList<Node> n = new ArrayList<Node>(nodeNum);
+  ArrayList<Muscle> m = new ArrayList<Muscle>(muscleNum);
+  for (int i = 0; i < nodeNum; i++) {
+    n.add(new Node(random(-1, 1), random(-1, 1), random(-1, 1),
+    0, 0, 0, 0.4, random(0, 1))); //replaced all nodes' sizes with 0.4, used to be random(0.1,1), random(0,1)
+  }
+  for (int i = 0; i < muscleNum; i++) {
+    int tc1 = 0;
+    int tc2 = 0;
+    if (i < nodeNum-1) {
+      tc1 = i;
+      tc2 = i+1;
+    } else {
+      tc1 = int(random(0, nodeNum));
+      tc2 = tc1;
+      while (tc2 == tc1) {
+        tc2 = int(random(0, nodeNum));
+      }
+    }
+    float s = 0.8;
+    if (i >= 10) {
+      s *= 1.414;
+    }
+    float len = random(0.5,1.5);
+    m.add(new Muscle(tc1, tc2, len, random(0.015, 0.06)));
+  }
+  float heartbeat = random(40, 80);
+  return new Creature(null, index+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 0, true, heartbeat, 1.0, null, null); 
 }
