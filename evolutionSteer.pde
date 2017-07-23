@@ -1,5 +1,5 @@
-final float windowSizeMultiplier = 1.4;
-final int SEED = 31; //7;  ;(
+final float windowSizeMultiplier = 1;
+final int SEED = 314; //7;  ;(
 
 PFont font;
 ArrayList<Float[]> percentile = new ArrayList<Float[]>(0);
@@ -28,9 +28,9 @@ boolean saveFramesPerGeneration = true;
 color gridBGColor = color(220, 253, 102, 255);
 float foodAngleChange = 0.0;
 
-int nbCreatures = 1000; // please set even number
-int gridX = 40; // X * Y must be equal to nbCreatures !
-int gridY = 25;
+static int nbCreatures = 2000; // please set even number
+int gridX = 50; // X * Y must be equal to nbCreatures !
+int gridY = 40;
 int thresholdName = 25; // name of species is showed over this threshold
 
 int lastImageSaved = -1;
@@ -61,7 +61,7 @@ float camZ = 0;
 float camHA = 0;
 float camVA = -0.5;
 int frames = 60;
-int simDuration = 5; // in seconds
+int simDuration = 15; // in seconds
 int maxFrames = simDuration*frames;
 int maxSimulationFrames = simDuration*frames;
 int menu = 0;
@@ -90,8 +90,6 @@ float airFriction = 0.95;
 float MIN_FOOD_DISTANCE = 1;
 float MAX_FOOD_DISTANCE = 2.5;
 
-float target;
-float force;
 int speed;
 boolean stepbystep;
 boolean stepbystepslow;
@@ -106,7 +104,7 @@ float STARTING_AXON_VARIABILITY = 1.0;
 float AXON_START_MUTABILITY = 0.0005;
 
 boolean enableRadioactivity = false;
-int radioactiveNumber = 200; // number of highly mutated creatures
+int radioactiveNumber = 400; // number of highly mutated creatures
 int freshBloodNumber = 0; // number of brand new creatures
 float radioactiveMutator = 1.5;
 
@@ -115,6 +113,8 @@ int PATRON_COUNT = 75;
 float TOTAL_PLEDGED = 183.39;
 int[] CREATURES_PER_PATRON = new int[PATRON_COUNT];
 float startingFoodDistance = 0;
+
+int THREAD_COUNT = 14;
 
 float inter(int a, int b, float offset) {
   return float(a)+(float(b)-float(a))*offset;
@@ -471,7 +471,7 @@ void adjustToCenter(int nodeNum) {
     ni.y -= lowY;
   }
 }
-Creature[] c = new Creature[nbCreatures];
+//Creature[] c = new Creature[nbCreatures];
 ArrayList<Creature> c2 = new ArrayList<Creature>();
 
 void mouseWheel(MouseEvent event) {
@@ -597,7 +597,6 @@ void mouseReleased() {
       timer = 0;
       creaturesTested++;
       for (int i = creaturesTested; i < nbCreatures; i++) {
-        setGlobalVariables(c[i]);
         maxFrames = simDuration*frames;
         for (int s = 0; s < maxFrames; s++) {
           if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
@@ -632,7 +631,7 @@ void drawScreenImage(int stage) {
   screenImage.noStroke();
   for (int j = 0; j < nbCreatures; j++) {
     Creature cj = c2.get(j);
-    if (stage == 3) cj = c[cj.id-(gen*nbCreatures)-(nbCreatures+1)];
+    if (stage == 3) cj = Constants.c[cj.id-(gen*nbCreatures)-(nbCreatures+1)];
     int j2 = j;
     if (stage == 0) {
       j2 = cj.id-(gen*nbCreatures)-1;
@@ -1035,11 +1034,11 @@ void draw() {
     creatures = 0;
     for (int y = 0; y < gridY; y++) {
       for (int x = 0; x < gridX; x++) {
-        c[y*gridX+x] = createNewCreature(y*gridX+x);
-        c[y*gridX+x].checkForOverlap();
-        c[y*gridX+x].checkForLoneNodes();
-        c[y*gridX+x].toStableConfiguration();
-        c[y*gridX+x].moveToCenter();
+        Constants.c[y*gridX+x] = createNewCreature(y*gridX+x);
+        Constants.c[y*gridX+x].checkForOverlap();
+        Constants.c[y*gridX+x].checkForLoneNodes();
+        Constants.c[y*gridX+x].toStableConfiguration();
+        Constants.c[y*gridX+x].moveToCenter();
       }
     }
     creatures = 0;
@@ -1054,7 +1053,7 @@ void draw() {
       for (int x = 0; x < gridX; x++) {
         screenImage.pushMatrix();
         screenImage.translate(((x+1)*xWidth)*scaleToFixBug, ((y+1)*yHeight+gridHeightCrop/20.0)*scaleToFixBug, 0);
-        c[y*gridX+x].drawCreature(screenImage,true);
+        Constants.c[y*gridX+x].drawCreature(screenImage,true);
         screenImage.popMatrix();
       }
     }
@@ -1074,21 +1073,34 @@ void draw() {
     background(0,0,255);
     image(screenImage, 0, 0, 1280, 720);
   }else if (menu == 4) {
-    setGlobalVariables(c[creaturesTested]);
+    setGlobalVariables(Constants.c[creaturesTested]);
     setMenu(5);
     if (!stepbystepslow) {
       long start = System.nanoTime();
-      for (int i = 0; i < nbCreatures; i++) {
-        setGlobalVariables(c[i]);
-        maxFrames = simDuration*frames;
-        for (int s = 0; s < maxFrames; s++) {
-          if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
+      Thread[] threads = new Thread[THREAD_COUNT];
+      println("");
+      int previousLastIndex = 0;
+      for(int i = 0; i < threads.length; i++) {
+        int firstIndex = previousLastIndex;
+        int lastIndex;
+        if(i == threads.length - 1) {
+          lastIndex = nbCreatures;
+        } else {
+          lastIndex = (int)((i+1) * float(nbCreatures) / threads.length);
         }
-        currentCreature.setAverages();
-        setFitness(i);
+        threads[i] = new Thread(new ComputingThread(firstIndex, lastIndex, simDuration*frames));
+        threads[i].start();
+        previousLastIndex = lastIndex;
+      }
+      for(int i = 0; i < threads.length; i++) {
+        try {
+          threads[i].join();
+        } catch (InterruptedException ie) {
+          ie.printStackTrace(); // :(
+        }
       }
       double simulationTime = Math.round((System.nanoTime() - start) / 100000D) / 10;
-      frame.setTitle("evolutionSteer | simulationTime: " + simulationTime + " ms");
+      surface.setTitle("evolutionSteer | simulationTime: " + simulationTime + " ms");
       setMenu(6);
     }
   }
@@ -1168,7 +1180,7 @@ void draw() {
     //sort
     c2 = new ArrayList<Creature>(0);
     for(int i = 0; i < nbCreatures; i++){
-      c2.add(c[i]);
+      c2.add(Constants.c[i]);
     }
     c2 = quickSort(c2);
     percentile.add(new Float[29]);
@@ -1333,7 +1345,7 @@ void draw() {
     }
     for (int j = 0; j < nbCreatures; j++) {
       Creature cj = c2.get(j);
-      c[cj.id-(gen*nbCreatures)-nbCreatures-1] = cj.copyCreature(-1,false,false);
+      Constants.c[cj.id-(gen*nbCreatures)-nbCreatures-1] = cj.copyCreature(-1,false,false);
     }
     drawScreenImage(3);
     gen++;
@@ -1588,7 +1600,7 @@ String rankify(int s){
   }
 }
 void setFitness(int i){
-  c[i].d = currentCreature.getFitness();
+  Constants.c[i].d = currentCreature.getFitness();
 }
 
 Creature createNewCreature(int index){

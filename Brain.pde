@@ -80,12 +80,12 @@ class Brain {
         }
       }
     }else{
-      neurons = null;
+      neurons = new float[BRAIN_WIDTH][BRAIN_HEIGHT];//null;
     }
   }
   public void useBrain(Creature owner){
-    ArrayList<Node> n = owner.n;
-    ArrayList<Muscle> m = owner.m;
+    final ArrayList<Node> n = owner.n;
+    final ArrayList<Muscle> m = owner.m;
     for(int i = 0; i < n.size(); i++){
       Node ni = n.get(i);
       neurons[0][i] = dist(ni.x, ni.y, ni.z, owner.foodX, owner.foodY, owner.foodZ);
@@ -117,13 +117,13 @@ class Brain {
     return 1.0/(1.0+pow(2.71828182846,-input));
   }
   Brain getUsableCopyOfBrain(){
-    return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons,true,false);
+    return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons.clone(),true,false);
   }
   Brain copyBrain(){
-    return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons,false,false);
+    return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons.clone(),false,false);
   }
   Brain copyMutatedBrain(){
-    return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons,false,true);
+    return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons.clone(),false,true);
   }
   public void drawBrain(float scaleUp, Creature owner){
     ArrayList<Node> n = owner.n;
