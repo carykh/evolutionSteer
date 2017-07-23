@@ -284,7 +284,8 @@ class Creature {
       n.get(i).vy = 0;
     }
   }
-  void simulate() {
+  boolean simulate() {
+    boolean hasEaten = false;
     brain.useBrain(this);
     for (int i = 0; i < m.size(); i++) {
       m.get(i).applyForce(i, n);
@@ -297,8 +298,10 @@ class Creature {
       float distFromFood = dist(ni.x,ni.y,ni.z,foodX,foodY,foodZ);
       if(distFromFood <= 0.4){
         chomps++;
+        if (chomps < 10){ hasEaten = true; }
         setFoodLocation();
       }
     }
+    return hasEaten;
   }
 }

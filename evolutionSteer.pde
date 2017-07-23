@@ -60,6 +60,9 @@ float camZ = 0;
 float camHA = 0;
 float camVA = -0.5;
 int frames = 60;
+int simDuration = 5; // in seconds
+int maxFrames = simDuration*frames;
+int maxSimulationFrames = simDuration*frames;
 int menu = 0;
 int gen = -1;
 float sliderX = 1170;
@@ -496,6 +499,7 @@ void mousePressed() {
 
 void openMiniSimulation() {
   simulationTimer = 0;
+  maxSimulationFrames = simDuration*frames;
   if (gensToDo == 0) {
     miniSimulation = true;
     int id;
@@ -569,24 +573,27 @@ void mouseReleased() {
     setMenu(8);
   } else if((menu == 5 || menu == 4) && mY >= windowHeight-40){
     if(mX < 90){
-      for (int s = timer; s < 900; s++) {
-        simulateCurrentCreature();
+      maxFrames = simDuration*frames;
+      for (int s = timer; s < maxFrames; s++) {
+        if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
       }
       timer = 1021;
     }else if(mX >= 120 && mX < 360){
       speed *= 2;
-      if(speed == 1024) speed = 900;
+      if(speed == 1024) speed = simDuration*frames;
       if(speed >= 1800) speed = 1;
     }else if(mX >= windowWidth-120){
-      for (int s = timer; s < 900; s++) {
-        simulateCurrentCreature();
+      maxFrames = simDuration*frames;
+      for (int s = timer; s < maxFrames; s++) {
+        if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
       }
       timer = 0;
       creaturesTested++;
       for (int i = creaturesTested; i < 1000; i++) {
         setGlobalVariables(c[i]);
-        for (int s = 0; s < 900; s++) {
-          simulateCurrentCreature();
+        maxFrames = simDuration*frames;
+        for (int s = 0; s < maxFrames; s++) {
+          if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
         }
         setAverages();
         setFitness(i);
@@ -603,11 +610,12 @@ void mouseReleased() {
     setMenu(1);
   }
 }
-void simulateCurrentCreature(){
-  currentCreature.simulate();
+boolean simulateCurrentCreature(){
+  boolean hasEaten = currentCreature.simulate();
   averageNodeNausea = totalNodeNausea/currentCreature.n.size();
   simulationTimer++;
   timer++;
+  return hasEaten;
 }
 void drawScreenImage(int stage) {
   screenImage.beginDraw();
@@ -707,7 +715,7 @@ void drawpopUpImage() {
   
   popUpImage.scale(1.0/camZoom/scaleToFixBug);
   
-  if (simulationTimer < 900) {
+  if (simulationTimer < maxSimulationFrames) {
     popUpImage.background(120, 200, 255);
   } else {
     popUpImage.background(60, 100, 128);
@@ -845,7 +853,7 @@ void drawStatusWindow(boolean isFirstFrame) {
     drawBrain(px2-130, py2, 1,5, cj);
     drawStats(px2+355, py2+239, 1, 0.45);
     
-    simulateCurrentCreature();
+    if(simulateCurrentCreature()){ maxSimulationFrames += simDuration*frames; }
     int shouldBeWatching = statusWindow;
     if (statusWindow <= -1) {
       cj = creatureDatabase.get((genSelected-1)*3+statusWindow+3);
@@ -1047,8 +1055,9 @@ void draw() {
     if (!stepbystepslow) {
       for (int i = 0; i < 1000; i++) {
         setGlobalVariables(c[i]);
-        for (int s = 0; s < 900; s++) {
-          simulateCurrentCreature();
+        maxFrames = simDuration*frames;
+        for (int s = 0; s < maxFrames; s++) {
+          if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
         }
         setAverages();
         setFitness(i);
@@ -1057,13 +1066,14 @@ void draw() {
     }
   }
   if (menu == 5) { //simulate running
-    if (timer <= 900) {
+    maxFrames = simDuration*frames;
+    if (timer <= maxFrames) {
       keysToMoveCamera();
       simulationImage.beginDraw();
       simulationImage.background(120, 200, 255);
       for (int s = 0; s < speed; s++) {
-        if (timer < 900) {
-          simulateCurrentCreature();
+        if (timer < simDuration*frames) {
+          if(simulateCurrentCreature()){ maxFrames += simDuration*frames; }
         }
       }
       setAverages();
@@ -1097,7 +1107,7 @@ void draw() {
       drawSkipButton();
       drawOtherButtons();
     }
-    if (timer == 900) {
+    if (timer == maxFrames) {
       if (speed < 30) {
         noStroke();
         fill(0, 0, 0, 130);
@@ -1110,11 +1120,11 @@ void draw() {
         text("Creature's "+fitnessName+":", windowWidth/2, 300);
         text(nf(getFitness(),0,2) + " "+fitnessUnit, windowWidth/2, 400);
       } else {
-        timer = 1020;
+        timer = maxFrames+(2*frames);
       }
       setFitness(creaturesTested);
     }
-    if (timer >= 1020) {
+    if (timer >= maxFrames+(2*frames)) {
       setMenu(4);
       creaturesTested++;
       if (creaturesTested == 1000) {
@@ -1122,7 +1132,7 @@ void draw() {
       }
       camX = 0;
     }
-    if (timer >= 900) {
+    if (timer >= simDuration*frames) {
       timer += speed;
     }
   }
@@ -1445,7 +1455,7 @@ void drawStats(float x, float y, float z, float size){
   scale(size);
   text(toRealName(currentCreature.name), 0, 32);
   text("Creature ID: "+currentCreature.id, 0, 64);
-  text("Time: "+nf(timer/60.0,0,2)+" / 15 sec.", 0, 96);
+  text("Time: "+nf(float(timer)/float(frames),0,2)+" / "+simDuration+" sec.", 0, 96);
   text("Playback Speed: x"+max(1,speed), 0, 128);
   String extraWord = "used";
   if(energyDirection == -1){
