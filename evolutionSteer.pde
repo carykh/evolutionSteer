@@ -33,6 +33,11 @@ float foodZ = 0;
 float foodAngle = 0;
 int chomps = 0;
 
+int nbCreatures = 1000; // please set even number
+int gridX = 40; // X * Y must be equal to nbCreatures !
+int gridY = 25;
+int thresholdName = 25; // name of species is showed over this threshold
+
 int lastImageSaved = -1;
 float pressureUnit = 500.0/2.37;
 float energyUnit = 20;
@@ -53,6 +58,7 @@ float lineY2 = 0.35;
 
 int windowWidth = 1280;
 int windowHeight = 720;
+int gridHeightCrop = 100;
 int timer = 0;
 float camX = 0;
 float camY = 0;
@@ -81,7 +87,7 @@ int overallTimer = 0;
 boolean miniSimulation = false;
 int creatureWatching = 0;
 int simulationTimer = 0;
-int[] creaturesInPosition = new int[1000];
+int[] creaturesInPosition = new int[nbCreatures];
 
 float camZoom = 0.015;
 float gravity = 0.006;//0.007;
@@ -98,10 +104,11 @@ int speed;
 boolean stepbystep;
 boolean stepbystepslow;
 boolean slowDies;
-int[] p = {
+int[] pPercentages = {
   0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 
   100, 200, 300, 400, 500, 600, 700, 800, 900, 910, 920, 930, 940, 950, 960, 970, 980, 990, 999
 };
+int[] p = new int[29];
 final int BRAIN_WIDTH = 3;
 float STARTING_AXON_VARIABILITY = 1.0;
 float AXON_START_MUTABILITY = 0.0005;
@@ -253,8 +260,8 @@ void drawGraphImage() {
     noStroke();
     for (int i = 1; i < 101; i++) {
       int c = s[i]-s[i-1];
-      if (c >= 25) {
-        float y = ((s[i]+s[i-1])/2)/1000.0*100+573;
+      if (c >= thresholdName) {
+        float y = ((s[i]+s[i-1])/2)/float(nbCreatures)*100+573;
         if (i-1 == topSpeciesCounts.get(genSelected)) {
           stroke(0);
           strokeWeight(2);
@@ -366,10 +373,10 @@ void drawSegBars(int x, int y, int graphWidth, int graphHeight) {
     for (int j = 0; j < 100; j++) {
       segBarImage.fill(getColor(j, false));
       segBarImage.beginShape();
-      segBarImage.vertex(barX1, y+speciesCounts.get(i)[j]/1000.0*graphHeight);
-      segBarImage.vertex(barX1, y+speciesCounts.get(i)[j+1]/1000.0*graphHeight);
-      segBarImage.vertex(barX2, y+speciesCounts.get(i2)[j+1]/1000.0*graphHeight);
-      segBarImage.vertex(barX2, y+speciesCounts.get(i2)[j]/1000.0*graphHeight);
+      segBarImage.vertex(barX1, y+speciesCounts.get(i)[j]/float(nbCreatures)*graphHeight);
+      segBarImage.vertex(barX1, y+speciesCounts.get(i)[j+1]/float(nbCreatures)*graphHeight);
+      segBarImage.vertex(barX2, y+speciesCounts.get(i2)[j+1]/float(nbCreatures)*graphHeight);
+      segBarImage.vertex(barX2, y+speciesCounts.get(i2)[j]/float(nbCreatures)*graphHeight);
       segBarImage.endShape();
     }
   }
@@ -464,7 +471,7 @@ void setAverages() {
   averageY = averageY/currentCreature.n.size();
   averageZ = averageZ/currentCreature.n.size();
 }
-Creature[] c = new Creature[1000];
+Creature[] c = new Creature[nbCreatures];
 ArrayList<Creature> c2 = new ArrayList<Creature>();
 
 void mouseWheel(MouseEvent event) {
@@ -589,7 +596,7 @@ void mouseReleased() {
       }
       timer = 0;
       creaturesTested++;
-      for (int i = creaturesTested; i < 1000; i++) {
+      for (int i = creaturesTested; i < nbCreatures; i++) {
         setGlobalVariables(c[i]);
         maxFrames = simDuration*frames;
         for (int s = 0; s < maxFrames; s++) {
@@ -624,19 +631,21 @@ void drawScreenImage(int stage) {
   screenImage.smooth();
   screenImage.background(gridBGColor);
   screenImage.noStroke();
-  for (int j = 0; j < 1000; j++) {
+  for (int j = 0; j < nbCreatures; j++) {
     Creature cj = c2.get(j);
-    if (stage == 3) cj = c[cj.id-(gen*1000)-1001];
+    if (stage == 3) cj = c[cj.id-(gen*nbCreatures)-(nbCreatures+1)];
     int j2 = j;
     if (stage == 0) {
-      j2 = cj.id-(gen*1000)-1;
+      j2 = cj.id-(gen*nbCreatures)-1;
       creaturesInPosition[j2] = j;
     }
-    int x = j2%40;
-    int y = floor(j2/40);
-    if (stage >= 1) y++;
+    int x = j2%gridX;
+    int y = floor(j2/gridX);
+    float xWidth = windowWidth / (gridX+1) / 10.0;
+    float yHeight = (windowHeight - gridHeightCrop)  / (gridY+1) / 10.0;
+    //if (stage >= 1) y++;
     screenImage.pushMatrix();
-    screenImage.translate((x*3+5.5)*scaleToFixBug, (y*2.5+3)*scaleToFixBug, 0);
+    screenImage.translate(((x+1)*xWidth)*scaleToFixBug, ((y+0.5)*yHeight+(gridHeightCrop/20.0))*scaleToFixBug, 0);
     cj.drawCreature(screenImage,true);
     screenImage.popMatrix();
   }
@@ -654,24 +663,26 @@ void drawScreenImage(int stage) {
   if (stage == 0) {
     screenImage.rect(900, 664, 260, 40);
     screenImage.fill(0);
-    screenImage.text("All 1,000 creatures have been tested.  Now let's sort them!", windowWidth/2-200, 690);
+    screenImage.text("All "+nbCreatures+" creatures have been tested.  Now let's sort them!", windowWidth/2-200, 690);
     screenImage.text("Sort", windowWidth-250, 690);
   } else if (stage == 1) {
     screenImage.rect(900, 670, 260, 40);
     screenImage.fill(0);
     screenImage.text("Fastest creatures at the top!", windowWidth/2, 30);
     screenImage.text("Slowest creatures at the bottom. (Going backward = slow)", windowWidth/2-200, 700);
-    screenImage.text("Kill 500", windowWidth-250, 700);
+    screenImage.text("Kill "+(nbCreatures/2), windowWidth-250, 700);
   } else if (stage == 2) {
     screenImage.rect(1050, 670, 160, 40);
     screenImage.fill(0);
     screenImage.text("Faster creatures are more likely to survive because they can outrun their predators.  Slow creatures get eaten.", windowWidth/2, 30);
     screenImage.text("Because of random chance, a few fast ones get eaten, while a few slow ones survive.", windowWidth/2-130, 700);
     screenImage.text("Reproduce", windowWidth-150, 700);
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < nbCreatures; j++) {
       Creature cj = c2.get(j);
-      int x = j%40;
-      int y = floor(j/40)+1;
+      int x = j%gridX;
+      int y = floor(j/gridX);//+1;
+      float xWidth = windowWidth / (gridX+1);
+      float yHeight = (windowHeight - gridHeightCrop) / (gridY+1);
       if (cj.alive) {
         /*screenImage.pushMatrix();
         screenImage.scale(10.0*windowSizeMultiplier/scaleToFixBug);
@@ -683,17 +694,17 @@ void drawScreenImage(int stage) {
       } else {
         screenImage.fill(0);
         screenImage.beginShape();
-        screenImage.vertex(x*30+40, y*25+17,0.01);
-        screenImage.vertex(x*30+70, y*25+17,0.01);
-        screenImage.vertex(x*30+70, y*25+42,0.01);
-        screenImage.vertex(x*30+40, y*25+42,0.01);
+        screenImage.vertex((x+1)*xWidth-15, (y+0.5)*yHeight+(gridHeightCrop/2)-12,0.01);
+        screenImage.vertex((x+1)*xWidth+15, (y+0.5)*yHeight+(gridHeightCrop/2)-12,0.01);
+        screenImage.vertex((x+1)*xWidth+15, (y+0.5)*yHeight+(gridHeightCrop/2)+12,0.01);
+        screenImage.vertex((x+1)*xWidth-15, (y+0.5)*yHeight+(gridHeightCrop/2)+12,0.01);
         screenImage.endShape();
       }
     }
   } else if (stage == 3) {
     screenImage.rect(1050, 670, 160, 40);
     screenImage.fill(0);
-    screenImage.text("These are the 1000 creatures of generation #"+(gen+2)+".", windowWidth/2, 30);
+    screenImage.text("These are the "+nbCreatures+" creatures of generation #"+(gen+2)+".", windowWidth/2, 30);
     screenImage.text("What perils will they face?  Find out next time!", windowWidth/2-130, 700);
     screenImage.text("Back", windowWidth-150, 700);
   }
@@ -787,6 +798,8 @@ void drawHistogram(int x, int y, int hw, int hh) {
 void drawStatusWindow(boolean isFirstFrame) {
   int x, y, px, py;
   int rank = (statusWindow+1);
+  float xWidth = windowWidth / (gridX+1);
+  float yHeight = (windowHeight - gridHeightCrop) / (gridY+1);
   Creature cj;
   stroke(abs(overallTimer%30-15)*17);
   strokeWeight(3);
@@ -794,21 +807,21 @@ void drawStatusWindow(boolean isFirstFrame) {
   if (statusWindow >= 0) {
     cj = c2.get(statusWindow);
     if (menu == 7) {
-      int id = ((cj.id-1)%1000);
-      x = id%40;
-      y = floor(id/40);
+      int id = ((cj.id-1)%nbCreatures);
+      x = id%gridX;
+      y = floor(id/gridX);
     } else {
-      x = statusWindow%40;
-      y = floor(statusWindow/40)+1;
+      x = statusWindow%gridX;
+      y = floor(statusWindow/gridX);//+1;
     }
-    px = x*30+55;
-    py = y*25+10;
+    px = floor((x+1)*xWidth);
+    py = floor((y+0.5)*yHeight+(gridHeightCrop/2)-19);
     if (px <= 1140) {
       px += 80;
     } else {
       px -= 80;
     }
-    rect(x*30+40, y*25+17, 30, 25);
+    rect((x+1)*xWidth-15, (y+0.5)*yHeight+(gridHeightCrop/2)-12, 30, 25);
   } else {
     cj = creatureDatabase.get((genSelected-1)*3+statusWindow+3);
     x = 760+(statusWindow+3)*160;
@@ -817,7 +830,7 @@ void drawStatusWindow(boolean isFirstFrame) {
     py = y;
     rect(x, y, 140, 140);
     int[] ranks = {
-      1000, 500, 1
+      nbCreatures, nbCreatures/2, 1
     };
     rank = ranks[statusWindow+3];
   }
@@ -877,6 +890,9 @@ void setup() {
   for(int i = 0; i < PATRON_COUNT; i++){
     CREATURES_PER_PATRON[i] = 0;
   }
+  for (int i = 1; i < 29; i++) {
+    p[i] = int(floor(float(pPercentages[i])*float(nbCreatures)/1000.0));
+  };
   frameRate(60);
   randomSeed(SEED);
   noSmooth();
@@ -892,7 +908,7 @@ void setup() {
     beginBar[i] = 0;
   }
   for (int i = 0; i < 101; i++) {
-    beginSpecies[i] = 500;
+    beginSpecies[i] = nbCreatures/2;
   }
 
   percentile.add(beginPercentile);
@@ -968,7 +984,7 @@ void draw() {
       fill(100, 200, 100);
       rect(20, 250, 200, 100);
       fill(0);
-      text("Since there are no creatures yet, create 1000 creatures!", 20, 160);
+      text("Since there are no creatures yet, create "+nbCreatures+" creatures!", 20, 160);
       text("They will be randomly created, and also very simple.", 20, 200);
       text("CREATE", 56, 312);
     } else {
@@ -995,7 +1011,7 @@ void draw() {
       text("Median "+fitnessName, 50, 160);
       textAlign(CENTER);
       textAlign(RIGHT);
-      text(float(round(percentile.get(min(genSelected, percentile.size()-1))[14]*1000))/1000+" "+fitnessUnit, 700, 160);
+      text(float(round(percentile.get(min(genSelected, percentile.size()-1))[14]*nbCreatures))/nbCreatures+" "+fitnessUnit, 700, 160);
       drawHistogram(760, 410, 460, 280);
       drawGraphImage();
       //if(saveFramesPerGeneration && gen > lastImageSaved){
@@ -1011,13 +1027,13 @@ void draw() {
     }
   }else if (menu == 2) {
     creatures = 0;
-    for (int y = 0; y < 25; y++) {
-      for (int x = 0; x < 40; x++) {
-        c[y*40+x] = createNewCreature(y*40+x);
-        c[y*40+x].checkForOverlap();
-        c[y*40+x].checkForLoneNodes();
-        c[y*40+x].toStableConfiguration();
-        c[y*40+x].moveToCenter();
+    for (int y = 0; y < gridY; y++) {
+      for (int x = 0; x < gridX; x++) {
+        c[y*gridX+x] = createNewCreature(y*gridX+x);
+        c[y*gridX+x].checkForOverlap();
+        c[y*gridX+x].checkForLoneNodes();
+        c[y*gridX+x].toStableConfiguration();
+        c[y*gridX+x].moveToCenter();
       }
     }
     creatures = 0;
@@ -1026,11 +1042,13 @@ void draw() {
     screenImage.scale(windowSizeMultiplier);
     screenImage.pushMatrix();
     screenImage.scale(10.0/scaleToFixBug);
-    for (int y = 0; y < 25; y++) {
-      for (int x = 0; x < 40; x++) {
+    float xWidth = windowWidth / (gridX+1) / 10.0;
+    float yHeight = (windowHeight - gridHeightCrop) / (gridY+1) / 10.0;
+    for (int y = 0; y < gridY; y++) {
+      for (int x = 0; x < gridX; x++) {
         screenImage.pushMatrix();
-        screenImage.translate((x*3+5.5)*scaleToFixBug, (y*2.5+3)*scaleToFixBug, 0);
-        c[y*40+x].drawCreature(screenImage,true);
+        screenImage.translate(((x+1)*xWidth)*scaleToFixBug, ((y+1)*yHeight+gridHeightCrop/20.0)*scaleToFixBug, 0);
+        c[y*gridX+x].drawCreature(screenImage,true);
         screenImage.popMatrix();
       }
     }
@@ -1042,7 +1060,7 @@ void draw() {
     screenImage.fill(0);
     screenImage.textAlign(CENTER);
     screenImage.textFont(font, 24);
-    screenImage.text("Here are your 1000 randomly generated creatures!!!", windowWidth/2-200, 690);
+    screenImage.text("Here are your "+nbCreatures+" randomly generated creatures!!!", windowWidth/2-200, 690);
     screenImage.text("Back", windowWidth-250, 690);
     screenImage.endDraw();
     setMenu(3);
@@ -1053,7 +1071,7 @@ void draw() {
     setGlobalVariables(c[creaturesTested]);
     setMenu(5);
     if (!stepbystepslow) {
-      for (int i = 0; i < 1000; i++) {
+      for (int i = 0; i < nbCreatures; i++) {
         setGlobalVariables(c[i]);
         maxFrames = simDuration*frames;
         for (int s = 0; s < maxFrames; s++) {
@@ -1127,7 +1145,7 @@ void draw() {
     if (timer >= maxFrames+(2*frames)) {
       setMenu(4);
       creaturesTested++;
-      if (creaturesTested == 1000) {
+      if (creaturesTested == nbCreatures) {
         setMenu(6);
       }
       camX = 0;
@@ -1139,7 +1157,7 @@ void draw() {
   if (menu == 6) {
     //sort
     c2 = new ArrayList<Creature>(0);
-    for(int i = 0; i < 1000; i++){
+    for(int i = 0; i < nbCreatures; i++){
       c2.add(c[i]);
     }
     c2 = quickSort(c2);
@@ -1147,8 +1165,8 @@ void draw() {
     for (int i = 0; i < 29; i++) {
       percentile.get(gen+1)[i] = c2.get(p[i]).d;
     }
-    creatureDatabase.add(c2.get(999).copyCreature(-1,false,false));
-    creatureDatabase.add(c2.get(499).copyCreature(-1,false,false));
+    creatureDatabase.add(c2.get(nbCreatures-1).copyCreature(-1,false,false));
+    creatureDatabase.add(c2.get(nbCreatures/2-1).copyCreature(-1,false,false));
     creatureDatabase.add(c2.get(0).copyCreature(-1,false,false));
 
     Integer[] beginBar = new Integer[barLen];
@@ -1160,7 +1178,7 @@ void draw() {
     for (int i = 0; i < 101; i++) {
       beginSpecies[i] = 0;
     }
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < nbCreatures; i++) {
       int bar = floor(c2.get(i).d*histBarsPerMeter-minBar);
       if (bar >= 0 && bar < barLen) {
         barCounts.get(gen+1)[bar]++;
@@ -1197,16 +1215,18 @@ void draw() {
     screenImage.pushMatrix();
     screenImage.scale(10.0/scaleToFixBug*windowSizeMultiplier);
     float transition = 0.5-0.5*cos(min(float(timer)/60, PI));
-    for (int j = 0; j < 1000; j++) {
+    float xWidth = windowWidth / (gridX+1) / 10.0;
+    float yHeight = (windowHeight - gridHeightCrop) / (gridY+1) / 10.0;
+    for (int j = 0; j < nbCreatures; j++) {
       Creature cj = c2.get(j);
-      int j2 = cj.id-(gen*1000)-1;
-      int x1 = j2%40;
-      int y1 = floor(j2/40);
-      int x2 = j%40;
-      int y2 = floor(j/40)+1;
+      int j2 = cj.id-(gen*nbCreatures)-1;
+      int x1 = j2%gridX;
+      int y1 = floor(j2/gridX);
+      int x2 = j%gridX;
+      int y2 = floor(j/gridX)+1;
       float x3 = inter(x1, x2, transition);
       float y3 = inter(y1, y2, transition);
-      screenImage.translate((x3*3+5.5)*scaleToFixBug, (y3*2.5+4)*scaleToFixBug, 0);
+      screenImage.translate(((x3+1)*xWidth)*scaleToFixBug, ((y3+0.5)*yHeight-(gridHeightCrop/2))*scaleToFixBug, 0);
       cj.drawCreature(screenImage,true);
     }
     screenImage.popMatrix();
@@ -1225,20 +1245,19 @@ void draw() {
   }
   float mX = mouseX/windowSizeMultiplier;
   float mY = mouseY/windowSizeMultiplier;
+  float xWidth = windowWidth / (gridX+1);
+  float yHeight = (windowHeight - gridHeightCrop) / (gridY+1);
   prevStatusWindow = statusWindow;
   if (abs(menu-9) <= 2 && gensToDo == 0 && !drag) {
-    if (abs(mX-639.5) <= 599.5) {
-      if (menu == 7 && abs(mY-329) <= 312) {
-        statusWindow = creaturesInPosition[floor((mX-40)/30)+floor((mY-17)/25)*40];
-      }
-      else if (menu >= 9 && abs(mY-354) <= 312) {
-        statusWindow = floor((mX-40)/30)+floor((mY-42)/25)*40;
-      }
-      else {
-        statusWindow = -4;
-      }
-    }
-    else {
+    int mXI = floor((mX-(xWidth/2))/xWidth);
+    int mYI = floor((mY-(gridHeightCrop/2))/yHeight);
+    if(mXI < 0 || mXI >= gridX){ mXI = -1; }
+    if(mYI < 0 || mYI >= gridY){ mYI = -1; }
+    if (menu == 7 && mXI >= 0 && mYI >= 0) {
+        statusWindow = creaturesInPosition[mXI+mYI*gridX];
+    } else if (menu >= 9 && mXI >= 0 && mYI >= 0) {
+        statusWindow = mXI+mYI*gridX;
+    } else {
       statusWindow = -4;
     }
   } else if (menu == 1 && genSelected >= 1 && gensToDo == 0 && !drag) {
@@ -1256,9 +1275,9 @@ void draw() {
   }
   if (menu == 10) {
     //Kill!
-    for (int j = 0; j < 500; j++) {
+    for (int j = 0; j < nbCreatures/2; j++) {
       if(random(0,1) < getSB(gen)){
-        float f = float(j)/1000;
+        float f = float(j)/nbCreatures;
         float rand = (pow(random(-1, 1), 3)+1)/2; //cube function
         slowDies = (f <= rand);
       }else{
@@ -1268,9 +1287,9 @@ void draw() {
       int j3;
       if (slowDies) {
         j2 = j;
-        j3 = 999-j;
+        j3 = nbCreatures-1-j;
       } else {
-        j2 = 999-j;
+        j2 = nbCreatures-1-j;
         j3 = j;
       }
       Creature cj = c2.get(j2);
@@ -1287,24 +1306,24 @@ void draw() {
   }
   if (menu == 12) { //Reproduce and mutate
     justGotBack = true;
-    for (int j = 0; j < 500; j++) {
+    for (int j = 0; j < nbCreatures/2; j++) {
       int j2 = j;
-      if (!c2.get(j).alive) j2 = 999-j;
+      if (!c2.get(j).alive) j2 = nbCreatures-1-j;
       Creature cj = c2.get(j2);
-      Creature cj2 = c2.get(999-j2);
+      Creature cj2 = c2.get(nbCreatures-1-j2);
       
-      c2.set(j2, cj.copyCreature(cj.id+1000,true,false));        //duplicate
+      c2.set(j2, cj.copyCreature(cj.id+nbCreatures,true,false));        //duplicate
       if(enableRadioactivity && j >= nbCreatures/2 - freshBloodNumber) {
         c2.set(nbCreatures-1-j2, createNewCreature(cj2.id+nbCreatures-1));   //brand new creatures  
       } else if(enableRadioactivity && j >= nbCreatures/2 - radioactiveNumber - freshBloodNumber){
         c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, radioactiveMutator));   //radioactive offspring        
       } else {
-        c2.set(999-j2, cj.modified(cj2.id+1000, 1.0));   //mutated offspring 1
+        c2.set(nbCreatures-1-j2, cj.modified(cj2.id+nbCreatures, 1.0));   //mutated offspring 1
       }
     }
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < nbCreatures; j++) {
       Creature cj = c2.get(j);
-      c[cj.id-(gen*1000)-1001] = cj.copyCreature(-1,false,false);
+      c[cj.id-(gen*nbCreatures)-nbCreatures-1] = cj.copyCreature(-1,false,false);
     }
     drawScreenImage(3);
     gen++;
