@@ -300,7 +300,6 @@ color getColor(int i, boolean adjust) {
 }
 void drawGraph(int graphWidth, int graphHeight) { 
   graphImage.beginDraw();
-  graphImage.smooth();
   graphImage.background(220);
   if (gen >= 1) {
     drawLines(130, int(graphHeight*0.05), graphWidth-130, int(graphHeight*0.9));
@@ -359,7 +358,6 @@ void drawLines(int x, int y, int graphWidth, int graphHeight) {
 }
 void drawSegBars(int x, int y, int graphWidth, int graphHeight) {
   segBarImage.beginDraw();
-  segBarImage.smooth();
   segBarImage.noStroke();
   segBarImage.colorMode(HSB, 1);
   segBarImage.background(0, 0, 0.5);
@@ -628,7 +626,6 @@ void drawScreenImage(int stage) {
   screenImage.beginDraw();
   screenImage.pushMatrix();
   screenImage.scale(10.0*windowSizeMultiplier/scaleToFixBug);
-  screenImage.smooth();
   screenImage.background(gridBGColor);
   screenImage.noStroke();
   for (int j = 0; j < nbCreatures; j++) {
@@ -715,7 +712,6 @@ void drawpopUpImage() {
   setAverages();
   moveCamera();
   popUpImage.beginDraw();
-  popUpImage.smooth();
   
   float camDist = (450/2.0) / tan(PI*30.0 / 180.0);
   popUpImage.pushMatrix();
@@ -877,6 +873,10 @@ void drawStatusWindow(boolean isFirstFrame) {
     }
   }
 }
+void settings(){
+  size(int(windowWidth*windowSizeMultiplier), int(windowHeight*windowSizeMultiplier),P3D);
+  smooth();
+}
 void setup() {
   String[] prePatronData = loadStrings("PatronReport_2017-06-12.csv");
   patronData = new String[PATRON_COUNT];
@@ -895,8 +895,6 @@ void setup() {
   };
   frameRate(60);
   randomSeed(SEED);
-  noSmooth();
-  size((int)(windowWidth*windowSizeMultiplier), (int)(windowHeight*windowSizeMultiplier),P3D);
   ellipseMode(CENTER);
   Float[] beginPercentile = new Float[29];
   Integer[] beginBar = new Integer[barLen];
@@ -922,11 +920,9 @@ void setup() {
   popUpImage = createGraphics(450, 450, P3D);
   segBarImage = createGraphics(975, 150);
   segBarImage.beginDraw();
-  segBarImage.smooth();
   segBarImage.background(220);
   segBarImage.endDraw();
   popUpImage.beginDraw();
-  popUpImage.smooth();
   popUpImage.background(220);
   popUpImage.endDraw();
   
@@ -1084,6 +1080,7 @@ void draw() {
     }
   }
   if (menu == 5) { //simulate running
+    background(255);
     maxFrames = simDuration*frames;
     if (timer <= maxFrames) {
       keysToMoveCamera();
@@ -1334,6 +1331,7 @@ void draw() {
     }
   }
   if(menu%2 == 1 && abs(menu-10) <= 3){
+    background(gridBGColor);
     image(screenImage, 0, 0, 1280, 720);
   }
   if (menu == 1 || gensToDo >= 1) {
