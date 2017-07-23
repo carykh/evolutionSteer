@@ -102,6 +102,9 @@ int[] p = {
 final int BRAIN_WIDTH = 3;
 float STARTING_AXON_VARIABILITY = 1.0;
 float AXON_START_MUTABILITY = 0.0005;
+boolean enableRadioactivity = false;
+int radioactiveNumber = 50;
+float radioactiveMutator = 5;
 String[] patronData;
 int PATRON_COUNT = 75;
 float TOTAL_PLEDGED = 183.39;
@@ -971,6 +974,9 @@ void draw() {
       fill(0);
       //text("Survivor Bias: "+percentify(getSB(genSelected)), 437, 50);
       text("Curve: ±"+nf(foodAngleChange/(2*PI)*360,0,2)+" degrees", 420, 50);
+      if(enableRadioactivity){
+         text("Radioactive mode", 460, 100);
+      }
       text("Do 1 step-by-step generation.", 770, 50);
       text("Do 1 quick generation.", 770, 100);
       text("Do 1 gen ASAP.", 770, 150);
@@ -1304,7 +1310,11 @@ void draw() {
       Creature cj2 = c2.get(999-j2);
       
       c2.set(j2, cj.copyCreature(cj.id+1000,true,false));        //duplicate
-      c2.set(999-j2, cj.modified(cj2.id+1000));   //mutated offspring 1
+      if(enableRadioactivity && j >= 500 - radioactiveNumber){
+        c2.set(999-j2, cj.modified(cj2.id+1000, radioactiveMutator));   //radioactive offspring        
+      } else {
+        c2.set(999-j2, cj.modified(cj2.id+1000, 1.0));   //mutated offspring 1
+      }
     }
     for (int j = 0; j < 1000; j++) {
       Creature cj = c2.get(j);
@@ -1443,6 +1453,10 @@ void keyPressed(){
   }
   if(key == 'g'){
     foodAngleChange -= 5.0/360.0*(2*PI);
+    setMenu(1);
+  }
+  if(key == 'r'){
+    enableRadioactivity = !enableRadioactivity;
     setMenu(1);
   }
 }

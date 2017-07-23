@@ -52,31 +52,36 @@ class Creature {
   public float sigmoid(float input){
     return 1.0/(1.0+pow(2.71828182846,-input));
   }
-  Creature modified(int id) {
+  Creature modified(int id, float mutationFactor) {
+    float modMut = mutationFactor * mutability;
     ArrayList<Node> newN = new ArrayList<Node>(0);
     ArrayList<Muscle> newM = new ArrayList<Muscle>(0);
     for (int i = 0; i < n.size(); i++) {
-      newN.add(n.get(i).modifyNode(mutability,n.size()));
+      newN.add(n.get(i).modifyNode(modMut,n.size()));
     }
     for (int i = 0; i < m.size(); i++) {
-      newM.add(m.get(i).modifyMuscle(n.size(), mutability));
+      newM.add(m.get(i).modifyMuscle(n.size(), modMut));
     }
     int[] newName = new int[2];
-    newName[0] = name[0];
-    newName[1] = CREATURES_PER_PATRON[name[0]];
-    CREATURES_PER_PATRON[name[0]]++;
+    if(mutationFactor > 1){
+      newName = getNewCreatureName();
+    } else {
+      newName[0] = name[0];
+      newName[1] = CREATURES_PER_PATRON[name[0]];
+      CREATURES_PER_PATRON[name[0]]++;
+    }
     Creature modifiedCreature = new Creature(newName, id, 
-    newN, newM, 0, true, creatureTimer+r()*16*mutability, min(mutability*random(0.8, 1.25), 2), brain.copyMutatedBrain(),null);
-    if (random(0, 1) < bigMutationChance*mutability || n.size() <= 2) { //Add a node
+    newN, newM, 0, true, creatureTimer+r()*16*modMut, min(mutability*random(0.8, 1.25), 2), brain.copyMutatedBrain(),null);
+    if (random(0, 1) < bigMutationChance*modMut || n.size() <= 2) { //Add a node
       modifiedCreature.addRandomNode();
     }
-    if (random(0, 1) < bigMutationChance*mutability) { //Add a muscle
+    if (random(0, 1) < bigMutationChance*modMut) { //Add a muscle
       modifiedCreature.addRandomMuscle(-1, -1);
     }
-    if (random(0, 1) < bigMutationChance*mutability && modifiedCreature.n.size() >= 5) { //Remove a node
+    if (random(0, 1) < bigMutationChance*modMut && modifiedCreature.n.size() >= 5) { //Remove a node
       modifiedCreature.removeRandomNode();
     }
-    if (random(0, 1) < bigMutationChance*mutability && modifiedCreature.m.size() >= 2) { //Remove a muscle
+    if (random(0, 1) < bigMutationChance*modMut && modifiedCreature.m.size() >= 2) { //Remove a muscle
       modifiedCreature.removeRandomMuscle();
     }
     modifiedCreature.checkForOverlap();
