@@ -1077,6 +1077,7 @@ void draw() {
     setGlobalVariables(c[creaturesTested]);
     setMenu(5);
     if (!stepbystepslow) {
+      long start = System.nanoTime();
       for (int i = 0; i < nbCreatures; i++) {
         setGlobalVariables(c[i]);
         maxFrames = simDuration*frames;
@@ -1086,6 +1087,8 @@ void draw() {
         currentCreature.setAverages();
         setFitness(i);
       }
+      double simulationTime = Math.round((System.nanoTime() - start) / 100000D) / 10;
+      frame.setTitle("evolutionSteer | simulationTime: " + simulationTime + " ms");
       setMenu(6);
     }
   }
