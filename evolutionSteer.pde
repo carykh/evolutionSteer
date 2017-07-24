@@ -7,8 +7,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
-final float windowSizeMultiplier = 1;
-final int SEED = 314; //7;  ;(
+float windowSizeMultiplier = 1;
+int SEED = 314; //7;  ;(
 
 PFont font;
 ArrayList<Float[]> percentile = new ArrayList<Float[]>(0);
@@ -1113,7 +1113,6 @@ void draw() {
     if (!stepbystepslow) {
       long start = System.nanoTime();
       Thread[] threads = new Thread[THREAD_COUNT];
-      println("");
       int previousLastIndex = 0;
       for(int i = 0; i < threads.length; i++) {
         int firstIndex = previousLastIndex;
@@ -1410,7 +1409,10 @@ void draw() {
             if(hasAutosaveWorked){
               try{
                 Path source = Paths.get(dataPath("")+"/autosave-tmp.gz");
-                new File(source.resolveSibling("autosave.gz").toString()).delete();
+                File autosaveGenuine = new File(source.resolveSibling("autosave.gz").toString());
+                if(autosaveGenuine.isFile()) { 
+                    autosaveGenuine.delete();
+                }
                 Files.move(source, source.resolveSibling("autosave.gz"));
               } catch(Exception e){
                 writeToErrorLog(e);
@@ -1753,15 +1755,12 @@ public JSONObject saveToJson(){
   JSONObject object = new JSONObject();
   object.setInt("seed", SEED);
   JSONArray creatureArray = new JSONArray();
-  println("creature",creatureDatabase.size());
   for(int i = 0; i < creatureDatabase.size(); i++){
     if(creatureDatabase.get(i) != null){
-      //println(creatureDatabase.get(i));
       creatureArray.setJSONObject(i, creatureDatabase.get(i).saveToJson());
     }
   }
   object.setJSONArray("creatures", creatureArray);
-  println("bars",barCounts.size());
   JSONArray bars = new JSONArray();
   for(int i = 0; i < barCounts.size();  i++){
     JSONArray iArray = new JSONArray();
@@ -1771,7 +1770,6 @@ public JSONObject saveToJson(){
     bars.setJSONArray(i,iArray);
   }
   object.setJSONArray("bars", bars);
-  println("percentiles",percentile.size());
   JSONArray percentiles = new JSONArray();
   for(int i = 0; i < percentile.size();  i++){
     JSONArray iArray = new JSONArray();
@@ -1781,7 +1779,6 @@ public JSONObject saveToJson(){
     percentiles.setJSONArray(i,iArray);
   }
   object.setJSONArray("percentiles", percentiles);
-  println("species",speciesCounts.size());
   JSONArray species = new JSONArray();
   for(int i = 0; i < speciesCounts.size();  i++){
     JSONArray iArray = new JSONArray();
