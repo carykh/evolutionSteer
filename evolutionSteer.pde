@@ -1032,7 +1032,7 @@ void draw() {
       //text("Survivor Bias: "+percentify(getSB(genSelected)), 437, 50);
       text("Curve: ±"+nf(foodAngleChange/(2*PI)*360,0,2)+" degrees", 420, 50);
       if(enableRadioactivity){
-         text("Radioactive mode", 460, 100);
+         text("Radioactive mode", 460, 130);
       }
       text("Do 1 step-by-step generation.", 770, 50);
       text("Do 1 quick generation.", 770, 100);
