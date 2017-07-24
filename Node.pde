@@ -1,4 +1,4 @@
-class Node {
+class Node implements ISavable{
   float x, y, z, vx, vy, vz, prevX, prevY, prevZ, pvx, pvy, pvz, m, f;
   boolean safeInput;
   float pressure;
@@ -186,4 +186,45 @@ class Node {
   color colorLerp(color a, color b, float x){
     return color(red(a)+(red(b)-red(a))*x, green(a)+(green(b)-green(a))*x, blue(a)+(blue(b)-blue(a))*x);
   }
+  
+  public JSONObject saveToJson(){
+    JSONObject object = new JSONObject();
+    object.setFloat("x", x);
+    object.setFloat("y", y);
+    object.setFloat("z", z);
+    object.setFloat("vx", vx);
+    object.setFloat("vy", vy);
+    object.setFloat("vz", vz);
+    object.setFloat("prevX", prevX);
+    object.setFloat("prevY", prevY);
+    object.setFloat("prevZ", prevZ);
+    object.setFloat("pvx", pvx);
+    object.setFloat("pvy", pvy);
+    object.setFloat("pvz", pvz);
+    object.setFloat("m", m);
+    object.setFloat("f", f);
+    object.setBoolean("safeInput", safeInput);
+    object.setFloat("pressure", pressure);
+    return object;
+  }
+  
+  public void loadFromJson(JSONObject parent){
+    x = parent.getFloat("x");
+    y = parent.getFloat("y");
+    z = parent.getFloat("z");
+    vx = parent.getFloat("vx");
+    vy = parent.getFloat("vy");
+    vz = parent.getFloat("vz");
+    prevX = parent.getFloat("prevX");
+    prevY = parent.getFloat("prevY");
+    prevZ = parent.getFloat("prevZ");
+    pvx = parent.getFloat("pvx");
+    pvy = parent.getFloat("pvy");
+    pvz = parent.getFloat("pvz");
+    m = parent.getFloat("m");
+    f = parent.getFloat("f");
+    safeInput = parent.getBoolean("safeInput");
+    pressure = parent.getFloat("pressure");
+  }
+
 }

@@ -1,4 +1,4 @@
-class Axon{
+class Axon implements ISavable{
   final double MUTABILITY_MUTABILITY = 0.7;
   final int mutatePower = 9;
   final double MUTATE_MULTI;
@@ -20,5 +20,17 @@ class Axon{
   }
   public double pmRan(){
     return (Math.random()*2-1);
+  }
+  
+  public JSONObject saveToJson(){
+    JSONObject object = new JSONObject();
+    object.setDouble("weight", weight);
+    object.setDouble("mutability", mutability);
+    return object;
+  }
+  
+  public void loadFromJson(JSONObject parent){
+    weight = parent.getDouble("weight", weight);
+    mutability = parent.getDouble("mutability", mutability);
   }
 }

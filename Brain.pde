@@ -1,4 +1,4 @@
-class Brain {
+class Brain implements ISavable{
   float[][] neurons;
   Axon[][][] axons;
   int BRAIN_WIDTH = 0;
@@ -177,4 +177,63 @@ class Brain {
       return color(255,255,255);
     }
   }
+  
+  public JSONObject saveToJson(){
+   JSONObject object = new JSONObject();
+   object.setInt("width", BRAIN_WIDTH);
+   object.setInt("height", BRAIN_HEIGHT);
+   JSONArray axonArray = new JSONArray();
+   if(axons != null){
+   for (int i = 0; i < axons.length; i++){
+     JSONArray iArray = new JSONArray();
+     for(int j = 0; j < axons[i].length; j++){
+       JSONArray jArray = new JSONArray();
+       for(int k = 0; k < axons[i][j].length; k++){
+         jArray.setJSONObject(k, axons[i][j][k].saveToJson());
+       }
+       iArray.setJSONArray(j, jArray);
+     }
+     axonArray.setJSONArray(i, iArray);
+   }
+   }
+   object.setJSONArray("axons", axonArray);
+   JSONArray neuronArray = new JSONArray();
+   if(neurons != null){
+   for(int i = 0; i < neurons.length; i++){
+     JSONArray iArray = new JSONArray();
+     for(int j = 0; j < neurons[i].length; j++){
+       iArray.setFloat(j, neurons[i][j]);
+     }
+     neuronArray.setJSONArray(i, iArray);
+   }
+   }
+   object.setJSONArray("neurons", neuronArray);
+   return object;
+  }
+  
+  public void loadFromJson(JSONObject parent){
+    BRAIN_WIDTH = parent.getInt("width");
+    BRAIN_HEIGHT = parent.getInt("height");
+    axons = new Axon[BRAIN_WIDTH-1][BRAIN_HEIGHT][BRAIN_HEIGHT-1];
+    JSONArray axonArray = parent.getJSONArray("axons");
+    for(int i = 0; i < axonArray.size(); i++){
+      JSONArray iArray = axonArray.getJSONArray(i);
+      for(int j = 0; j < iArray.size(); j++){
+        JSONArray jArray = iArray.getJSONArray(j);
+        for(int k = 0; k < jArray.size(); k++){
+          axons[i][j][k] = new Axon(0,0);
+          axons[i][j][k].loadFromJson(jArray.getJSONObject(k));
+        }
+      }
+    }
+    neurons = new float[BRAIN_WIDTH][BRAIN_HEIGHT];
+    JSONArray neuronArray = parent.getJSONArray("neurons");
+    for(int i = 0; i < neuronArray.size(); i++){
+      JSONArray iArray = neuronArray.getJSONArray(i);
+      for(int j = 0; j < iArray.size(); j++){
+        neurons[i][j] = iArray.getFloat(j);
+      }
+    }
+  }
+  
 }

@@ -1,4 +1,4 @@
-class Creature {
+class Creature implements ISavable {
   ArrayList<Node> n;
   ArrayList<Muscle> m;
   float d;
@@ -373,5 +373,78 @@ class Creature {
       }
     }
     return hasEaten;
+  }
+  
+  public JSONObject saveToJson(){
+    JSONObject object = new JSONObject();
+    JSONArray nodeArray = new JSONArray();
+    if(n != null){
+      for(int i = 0 ; i < this.n.size(); i++){
+        nodeArray.setJSONObject(i, this.n.get(i).saveToJson());
+      }
+    }
+    object.setJSONArray("nodes", nodeArray);
+    JSONArray muscleArray = new JSONArray();
+    for(int i = 0; i < this.m.size(); i++){
+      muscleArray.setJSONObject(i, this.m.get(i).saveToJson());
+    }
+    object.setJSONArray("muscles", muscleArray);
+    object.setFloat("d", d);
+    object.setInt("id", id);
+    object.setBoolean("alive", alive);
+    object.setFloat("creatureTimer", creatureTimer);
+    object.setFloat("mutability", mutability);
+    object.setJSONObject("brain", brain.saveToJson());
+    JSONArray nameArray = new JSONArray();
+    for(int i = 0; i < name.length; i++){
+      nameArray.setInt(i, name[i]);
+    }
+    object.setJSONArray("name", nameArray);
+    JSONArray foodArray = new JSONArray();
+    for(int i = 0; i < foodPositions.length; i++){
+      JSONArray iArray = new JSONArray();
+      for(int j = 0; j < foodPositions[i].length; j++){
+        iArray.setFloat(j, foodPositions[i][j]);
+      }
+      foodArray.setJSONArray(i, iArray);
+    }
+    object.setJSONArray("food", foodArray);
+    return object;
+  }
+  public void loadFromJson(JSONObject parent){
+    JSONArray nodeArray = parent.getJSONArray("nodes");
+    n = new ArrayList<Node>();
+    for(int i = 0; i < nodeArray.size(); i++){
+      Node node = new Node(0, 0, 0, 0, 0, 0, 0, 0);
+      node.loadFromJson(nodeArray.getJSONObject(i));
+      n.add(node);
+    }
+    JSONArray muscleArray = parent.getJSONArray("muscles");
+    m = new ArrayList<Muscle>();
+    for(int i = 0; i < muscleArray.size(); i++){
+      Muscle muscle = new Muscle(0, 0, 0, 0);
+      muscle.loadFromJson(muscleArray.getJSONObject(i));
+      m.add(muscle);
+    }
+    d = parent.getFloat("d");
+    id = parent.getInt("id");
+    alive = parent.getBoolean("alive");
+    creatureTimer = parent.getFloat("creatureTimer");
+    mutability = parent.getFloat("mutability");
+    brain = new Brain(1, 1);
+    brain.loadFromJson(parent.getJSONObject("brain"));
+    JSONArray nameArray = parent.getJSONArray("name");
+    name = new int[nameArray.size()];
+    for(int i = 0; i < nameArray.size(); i++){
+      name[i] = nameArray.getInt(i);
+    }
+    JSONArray foodArray = parent.getJSONArray("food");
+    foodPositions = new float[foodArray.size()][foodArray.getJSONArray(0).size()];
+    for(int i = 0; i < foodArray.size(); i++){
+      JSONArray iArray = foodArray.getJSONArray(i);
+      for(int j = 0; j < iArray.size(); j++){
+        foodPositions[i][j] = iArray.getFloat(j);
+      }
+    }
   }
 }
