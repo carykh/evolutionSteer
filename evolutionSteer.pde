@@ -43,6 +43,7 @@ int gridY = 40;
 int thresholdName = 25; // name of species is showed over this threshold
 
 int autoSave = 100; // autosave every x generation in ASAP mode
+boolean autoSaveTimecode = true; // set to false is disk space limited
 boolean hasAutosaveWorked = false;
 
 int lastImageSaved = -1;
@@ -1407,13 +1408,19 @@ void draw() {
             hasAutosaveWorked = false;
             saveSelected(new File(dataPath("")+"/autosave-tmp.gz"));
             if(hasAutosaveWorked){
+              String finalfilename = "";
+              if(autoSaveTimecode){
+                finalfilename = dataPath("")+"/autosave-"+year()+"-"+month()+"-"+day()+"_"+hour()+"-"+minute()+"-"+second()+".gz";
+              } else {
+                finalfilename = dataPath("")+"/autosave.gz";
+              }
               try{
                 Path source = Paths.get(dataPath("")+"/autosave-tmp.gz");
-                File autosaveGenuine = new File(source.resolveSibling("autosave.gz").toString());
+                File autosaveGenuine = new File(finalfilename);
                 if(autosaveGenuine.isFile()) { 
                     autosaveGenuine.delete();
                 }
-                Files.move(source, source.resolveSibling("autosave.gz"));
+                Files.move(source, Paths.get(finalfilename));
               } catch(Exception e){
                 writeToErrorLog(e);
               }

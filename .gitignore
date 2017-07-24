@@ -1,4 +1,5 @@
 
 data/autosave\.gz
+data/autosave-*\.gz
 
 error\.log
