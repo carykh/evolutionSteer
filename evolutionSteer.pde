@@ -559,9 +559,10 @@ void mouseReleased() {
   float mX = mouseX/windowSizeMultiplier;
   float mY = mouseY/windowSizeMultiplier;
   if (menu == 0 && abs(mX-windowWidth/2) <= 200 && abs(mY-400) <= 100) {
-    setMenu(1);//TODO add extra button click
+    setMenu(1);
   }else if(menu == 0 && abs(mX -windowWidth/2) <=150 && abs(mY - 600) <=50){
-     selectInput("Select a file to load", "fileSelected");
+    setMenu(14);
+    selectInput("Select a file to load", "fileSelected");
   }else if (menu == 1 && gen == -1 && abs(mX-120) <= 100 && abs(mY-300) <= 50) {
     setMenu(2);
   }else if (menu == 1 && gen >= 0 && abs(mX-990) <= 230) {
@@ -587,6 +588,7 @@ void mouseReleased() {
       startASAP();
     }
   }else if(menu == 1 && gen !=  -1 && abs(mX - 650) <= 50 && abs(mY - 90) <= 20){
+    setMenu(15);
     selectOutput("Select file to save simulation to",  "saveSelected");
   }else if (menu == 3 && abs(mX-1030) <= 130 && abs(mY-684) <= 20) {
     gen = 0;
@@ -1291,6 +1293,16 @@ void draw() {
       drawScreenImage(1);
       setMenu(9);
     }
+  } else if(menu == 14){
+    fill(0);
+    background(255, 200, 130);
+    textSize(60);
+    text("Please wait while loading...", windowWidth/2, 200);
+  } else if(menu == 15){
+    fill(0);
+    background(255, 200, 130);
+    textSize(60);
+    text("Please wait while saving...", windowWidth/2, 200);
   }
   float mX = mouseX/windowSizeMultiplier;
   float mY = mouseY/windowSizeMultiplier;
@@ -1706,6 +1718,7 @@ public void saveSelected(File file){
     Writer writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
     writer.write(object.toString());
     writer.close();
+    setMenu(1);
     }catch(Exception e){
       String[] error = new String[100];
       error[0] = e.toString();
