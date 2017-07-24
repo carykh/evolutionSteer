@@ -42,9 +42,10 @@ int gridX = 50; // X * Y must be equal to nbCreatures !
 int gridY = 40;
 int thresholdName = 25; // name of species is showed over this threshold
 
-int autoSave = 100; // autosave every x generation in ASAP mode
+int autoSave = 100; // autosave every x generation in ALAP mode
 boolean autoSaveTimecode = true; // set to false is disk space limited
 boolean hasAutosaveWorked = false;
+int autoPause = 10000; // pauses ALAP each x generation
 
 int lastImageSaved = -1;
 float pressureUnit = 500.0/2.37;
@@ -1426,6 +1427,11 @@ void draw() {
               }
             }
           }
+      }
+      if(autoPause > 0){ 
+         if(gen%autoPause == 0){
+           gensToDo = 0;
+         }
       }
       setMenu(1);
     }
