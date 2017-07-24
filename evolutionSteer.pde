@@ -2,6 +2,9 @@ import java.io.*;
 import java.io.BufferedReader;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 final float windowSizeMultiplier = 1;
@@ -38,6 +41,9 @@ static int nbCreatures = 2000; // please set even number
 int gridX = 50; // X * Y must be equal to nbCreatures !
 int gridY = 40;
 int thresholdName = 25; // name of species is showed over this threshold
+
+int autoSave = 100; // autosave every x generation in ASAP mode
+boolean hasAutosaveWorked = false;
 
 int lastImageSaved = -1;
 float pressureUnit = 500.0/2.37;
@@ -1393,12 +1399,27 @@ void draw() {
     }
     drawScreenImage(3);
     gen++;
+    massExtinction = false;
     if (stepbystep) {
       setMenu(13);
     } else {
+      if(autoSave > 0 && gen > 0){
+          if(gen%autoSave == 0){
+            hasAutosaveWorked = false;
+            saveSelected(new File(dataPath("")+"/autosave-tmp.gz"));
+            if(hasAutosaveWorked){
+              try{
+                Path source = Paths.get(dataPath("")+"/autosave-tmp.gz");
+                new File(source.resolveSibling("autosave.gz").toString()).delete();
+                Files.move(source, source.resolveSibling("autosave.gz"));
+              } catch(Exception e){
+                writeToErrorLog(e);
+              }
+            }
+          }
+      }
       setMenu(1);
     }
-    massExtinction = false;
   }
   if(menu%2 == 1 && abs(menu-10) <= 3){
     background(gridBGColor);
@@ -1684,7 +1705,14 @@ Creature createNewCreature(int index){
   float heartbeat = random(40, 80);
   return new Creature(null, index+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 0, true, heartbeat, 1.0, null, null); 
 }
-
+public void writeToErrorLog(Exception e){
+      String[] error = new String[100];
+      error[0] = e.toString();
+      for(int i = 0; i < e.getStackTrace().length; i++){
+        error[i+1] = e.getStackTrace()[i].toString();
+      }
+      saveStrings("error.log", error);
+}
 public void fileSelected(File file){
   if(file != null){
     try{
@@ -1700,12 +1728,7 @@ public void fileSelected(File file){
     randomSeed(SEED);
     //redraw();
     }catch(Exception e){
-      String[] error = new String[100];
-      error[0] = e.toString();
-      for(int i = 0; i < e.getStackTrace().length; i++){
-        error[i+1] = e.getStackTrace()[i].toString();
-      }
-      saveStrings("error.log", error);
+      writeToErrorLog(e);
     }
   }
 }
@@ -1718,14 +1741,10 @@ public void saveSelected(File file){
     Writer writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
     writer.write(object.toString());
     writer.close();
+    hasAutosaveWorked = true;
     setMenu(1);
     }catch(Exception e){
-      String[] error = new String[100];
-      error[0] = e.toString();
-      for(int i = 0; i < e.getStackTrace().length; i++){
-        error[i+1] = e.getStackTrace()[i].toString();
-      }
-      saveStrings("error.log", error);
+      writeToErrorLog(e);
     }
   }
 }
