@@ -11,7 +11,7 @@ public class ComputingThread implements Runnable{
     @Override
     public void run() {
       for(int k = this.beginIndex; k < this.endIndex; k++) {
-        myCreature = Constants.c[k].copyCreature(-1,false,true);
+        myCreature = c[k].copyCreature(-1,false,true);
         myCreature.calculateNextFoodLocation();
         int myMaxChomp = this.framePerChomp;
         boolean isJumper = false;
@@ -22,15 +22,11 @@ public class ComputingThread implements Runnable{
           }
         }
         if(isJumper){
-          Constants.c[k].d = 0;
+          c[k].d = 0;
         } else {
           myCreature.setAverages();
-          Constants.c[k].d = myCreature.getFitness();
+          c[k].d = myCreature.getFitness();
         }
       }  
     }
-}
-
-interface Constants {
-    Creature[] c = new Creature[nbCreatures];
 }
