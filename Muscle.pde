@@ -1,4 +1,4 @@
-class Muscle implements ISavable {
+class Muscle {
   int c1, c2;
   float len;
   float rigidity;
@@ -66,24 +66,34 @@ class Muscle implements ISavable {
     ni2.z*scaleToFixBug);
   }
   
-  public JSONObject saveToJson(){
-    JSONObject object = new JSONObject();
-    object.setInt("c1", c1);
-    object.setInt("c2", c2);
-    object.setFloat("len", len);
-    object.setFloat("rigidity", rigidity);
-    object.setFloat("previousTarget", previousTarget);
-    object.setFloat("brainOutput", brainOutput);
-    return object;
+  public void saveToJson(JsonGenerator g){
+    try{
+      g.writeNumberField("c1", this.c1);
+      g.writeNumberField("c2", this.c2);
+      g.writeNumberField("len", this.len);
+      g.writeNumberField("rigidity", this.rigidity);
+      g.writeNumberField("previousTarget", this.previousTarget);
+      g.writeNumberField("brainOutput", this.brainOutput);
+    } catch(Exception e){
+        writeToErrorLog(e);
+    }
   }
   
-  public void loadFromJson(JSONObject parent){
-    c1 = parent.getInt("c1");
-    c2 = parent.getInt("c2");
-    len = parent.getFloat("len");
-    rigidity = parent.getFloat("rigidity");
-    previousTarget = parent.getFloat("previousTarget");
-    brainOutput = parent.getFloat("brainOutput");
+  public void loadFromJson(JsonParser p){
+    try{
+       while(p.nextToken() != JsonToken.END_OBJECT){
+         String fieldName = p.getCurrentName();
+         p.nextToken();
+         if(fieldName.equals("c1")){ this.c1 = p.getIntValue(); }
+         else if(fieldName.equals("c2")){ this.c2 = p.getIntValue(); }
+         else if(fieldName.equals("len")){ this.len = p.getFloatValue(); }
+         else if(fieldName.equals("rigidity")){ this.rigidity = p.getFloatValue(); }
+         else if(fieldName.equals("previousTarget")){ this.previousTarget = p.getFloatValue(); }
+         else if(fieldName.equals("brainOutput")){ this.brainOutput = p.getFloatValue(); }
+       }
+    } catch(Exception e){
+      writeToErrorLog(e);
+    }
   }
 
 }

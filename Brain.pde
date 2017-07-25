@@ -1,4 +1,4 @@
-class Brain implements ISavable{
+class Brain {
   float[][] neurons;
   Axon[][][] axons;
   int BRAIN_WIDTH = 0;
@@ -178,61 +178,89 @@ class Brain implements ISavable{
     }
   }
   
-  public JSONObject saveToJson(){
-   JSONObject object = new JSONObject();
-   object.setInt("width", BRAIN_WIDTH);
-   object.setInt("height", BRAIN_HEIGHT);
-   JSONArray axonArray = new JSONArray();
-   if(axons != null){
-   for (int i = 0; i < axons.length; i++){
-     JSONArray iArray = new JSONArray();
-     for(int j = 0; j < axons[i].length; j++){
-       JSONArray jArray = new JSONArray();
-       for(int k = 0; k < axons[i][j].length; k++){
-         jArray.setJSONObject(k, axons[i][j][k].saveToJson());
-       }
-       iArray.setJSONArray(j, jArray);
-     }
-     axonArray.setJSONArray(i, iArray);
-   }
-   }
-   object.setJSONArray("axons", axonArray);
-   JSONArray neuronArray = new JSONArray();
-   if(neurons != null){
-   for(int i = 0; i < neurons.length; i++){
-     JSONArray iArray = new JSONArray();
-     for(int j = 0; j < neurons[i].length; j++){
-       iArray.setFloat(j, neurons[i][j]);
-     }
-     neuronArray.setJSONArray(i, iArray);
-   }
-   }
-   object.setJSONArray("neurons", neuronArray);
-   return object;
+  public void saveToJson(JsonGenerator g){
+    try{ 
+      g.writeNumberField("width", BRAIN_WIDTH);
+      g.writeNumberField("height", BRAIN_HEIGHT);
+      if(axons != null){
+         g.writeArrayFieldStart("axons");
+         for (int i = 0; i < axons.length; i++){
+           g.writeStartArray();
+           for(int j = 0; j < axons[i].length; j++){
+             g.writeStartArray();
+             for(int k = 0; k < axons[i][j].length; k++){
+               g.writeStartObject(); axons[i][j][k].saveToJson(g); g.writeEndObject();
+             }
+             g.writeEndArray();
+           }
+           g.writeEndArray();
+         }
+         g.writeEndArray();
+      }
+      if(neurons != null){
+         g.writeArrayFieldStart("neurons");
+         for(int i = 0; i < neurons.length; i++){
+           g.writeStartArray();
+           for(int j = 0; j < neurons[i].length; j++){
+             g.writeNumber(neurons[i][j]);
+           }
+           g.writeEndArray();
+         }
+         g.writeEndArray();
+      }
+    } catch(Exception e){
+        writeToErrorLog(e);
+    }
   }
   
-  public void loadFromJson(JSONObject parent){
-    BRAIN_WIDTH = parent.getInt("width");
-    BRAIN_HEIGHT = parent.getInt("height");
-    axons = new Axon[BRAIN_WIDTH-1][BRAIN_HEIGHT][BRAIN_HEIGHT-1];
-    JSONArray axonArray = parent.getJSONArray("axons");
-    for(int i = 0; i < axonArray.size(); i++){
-      JSONArray iArray = axonArray.getJSONArray(i);
-      for(int j = 0; j < iArray.size(); j++){
-        JSONArray jArray = iArray.getJSONArray(j);
-        for(int k = 0; k < jArray.size(); k++){
-          axons[i][j][k] = new Axon(0,0);
-          axons[i][j][k].loadFromJson(jArray.getJSONObject(k));
-        }
+  public void loadFromJson(JsonParser p){
+    try{
+       while(p.nextToken() != JsonToken.END_OBJECT){
+         String fieldName = p.getCurrentName();
+         JsonToken token = p.nextToken();
+         if(fieldName.equals("width")){ this.BRAIN_WIDTH = p.getIntValue(); }
+         else if(fieldName.equals("height")){ this.BRAIN_HEIGHT = p.getIntValue(); }
+         else if(fieldName.equals("axons")){
+           if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+           int i = 0;
+           axons = new Axon[BRAIN_WIDTH-1][BRAIN_HEIGHT][BRAIN_HEIGHT-1];
+           while((token = p.nextToken()) != JsonToken.END_ARRAY){
+             if (token == JsonToken.START_ARRAY){
+               int j = 0;
+               while((token = p.nextToken()) != JsonToken.END_ARRAY){
+                 if (token == JsonToken.START_ARRAY){
+                   int k = 0;
+                   while((token = p.nextToken()) != JsonToken.END_ARRAY){
+                     if (token != JsonToken.START_OBJECT) { throw new Exception("Expected Object"); }
+                     axons[i][j][k] = new Axon(0,0);
+                     axons[i][j][k].loadFromJson(p);
+                     k += 1;
+                   }
+                 }
+                 j += 1;
+               }
+             }
+             i += 1;
+           }
+         }
+         else if(fieldName.equals("neurons")){
+           if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+           int i = 0;
+           neurons = new float[BRAIN_WIDTH][BRAIN_HEIGHT];
+           while((token = p.nextToken()) != JsonToken.END_ARRAY){
+             if (token == JsonToken.START_ARRAY){
+               int j = 0;
+               while(p.nextToken() != JsonToken.END_ARRAY){
+                 neurons[i][j] = p.getFloatValue();
+                 j += 1;
+               }
+             }
+             i += 1;
+           }
+         }
       }
-    }
-    neurons = new float[BRAIN_WIDTH][BRAIN_HEIGHT];
-    JSONArray neuronArray = parent.getJSONArray("neurons");
-    for(int i = 0; i < neuronArray.size(); i++){
-      JSONArray iArray = neuronArray.getJSONArray(i);
-      for(int j = 0; j < iArray.size(); j++){
-        neurons[i][j] = iArray.getFloat(j);
-      }
+    } catch(Exception e){
+      writeToErrorLog(e);
     }
   }
   

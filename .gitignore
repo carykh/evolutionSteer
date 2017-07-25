@@ -3,3 +3,5 @@ data/autosave\.gz
 data/autosave-*\.gz
 
 error\.log
+
+data/tempfile\.gz

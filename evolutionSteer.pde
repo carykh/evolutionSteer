@@ -5,6 +5,12 @@ import java.util.zip.GZIPOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 
 
 float windowSizeMultiplier = 1;
@@ -42,7 +48,7 @@ int gridX = 50; // X * Y must be equal to nbCreatures !
 int gridY = 40;
 int thresholdName = 25; // name of species is showed over this threshold
 
-int autoSave = 100; // autosave every x generation in ALAP mode
+int autoSave = 200; // autosave every x generation in ALAP mode
 boolean autoSaveTimecode = true; // set to false is disk space limited
 boolean hasAutosaveWorked = false;
 int autoPause = 10000; // pauses ALAP each x generation
@@ -1423,6 +1429,7 @@ void draw() {
                 }
                 Files.move(source, Paths.get(finalfilename));
               } catch(Exception e){
+                println(e);
                 writeToErrorLog(e);
               }
             }
@@ -1728,155 +1735,197 @@ public void writeToErrorLog(Exception e){
       }
       saveStrings("error.log", error);
 }
+
 public void fileSelected(File file){
   if(file != null){
     try{
-    FileInputStream in = new FileInputStream(file.getAbsolutePath());
-    BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(in), "UTF-8"));
-    StringBuilder out = new StringBuilder();
-    String line;
-    while ((line = reader.readLine()) != null) { out.append(line); }
-    JSONObject object = parseJSONObject(out.toString());
-    reader.close();
-    loadFromJson(object);
-    setMenu(1);
-    randomSeed(SEED);
-    //redraw();
+      JsonFactory factory = new SmileFactory();
+      JsonParser p = factory.createParser(new GZIPInputStream(new FileInputStream(file.getAbsolutePath())));
+      loadFromJson(p);
+      setMenu(1);
+      randomSeed(SEED);
     }catch(Exception e){
       writeToErrorLog(e);
     }
+  } else {
+    setMenu(1);
   }
 }
 
 public void saveSelected(File file){
   if(file != null){
     try{
-    JSONObject object = saveToJson();
-    FileOutputStream out = new FileOutputStream(file.getAbsolutePath());
-    Writer writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
-    writer.write(object.toString());
-    writer.close();
-    hasAutosaveWorked = true;
-    setMenu(1);
+      JsonFactory factory = new SmileFactory();
+      GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(file.getAbsolutePath()));
+      JsonGenerator generator = factory.createGenerator(out, JsonEncoding.UTF8);
+      generator.writeStartObject();
+      saveToJson(generator);
+      generator.writeEndObject();
+      generator.close();
+      out.close();
+      hasAutosaveWorked = true;
+      setMenu(1);
     }catch(Exception e){
       writeToErrorLog(e);
     }
+  } else {
+    setMenu(1);
   }
 }
 
-public JSONObject saveToJson(){
-  JSONObject object = new JSONObject();
-  object.setInt("seed", SEED);
-  JSONArray creatureArray = new JSONArray();
-  for(int i = 0; i < creatureDatabase.size(); i++){
-    if(creatureDatabase.get(i) != null){
-      creatureArray.setJSONObject(i, creatureDatabase.get(i).saveToJson());
+public void saveToJson(JsonGenerator g){
+  try{
+    g.writeNumberField("version", 1);
+    g.writeNumberField("seed", SEED);
+    g.writeNumberField("foodChange", foodAngleChange);
+    g.writeNumberField("gen", gen);
+    g.writeNumberField("nbcreatures", nbCreatures);
+    g.writeNumberField("gridX", gridX);
+    g.writeNumberField("gridY", gridY);
+    g.writeArrayFieldStart("creatureDatabase");
+    for(int i = 0; i < creatureDatabase.size(); i++){
+      if(creatureDatabase.get(i) != null){
+        g.writeStartObject(); creatureDatabase.get(i).saveToJson(g); g.writeEndObject();
+      }
     }
-  }
-  object.setJSONArray("creatures", creatureArray);
-  JSONArray bars = new JSONArray();
-  for(int i = 0; i < barCounts.size();  i++){
-    JSONArray iArray = new JSONArray();
-    for(int j = 0; j < barCounts.get(i).length; j++){
-      iArray.setInt(j, barCounts.get(i)[j]);
+    g.writeEndArray();
+    g.writeArrayFieldStart("barCounts");
+    for(int i = 0; i < barCounts.size();  i++){
+      g.writeStartArray();
+      for(int j = 0; j < barCounts.get(i).length; j++){
+        g.writeNumber(barCounts.get(i)[j]);
+      }
+      g.writeEndArray();
     }
-    bars.setJSONArray(i,iArray);
-  }
-  object.setJSONArray("bars", bars);
-  JSONArray percentiles = new JSONArray();
-  for(int i = 0; i < percentile.size();  i++){
-    JSONArray iArray = new JSONArray();
-    for(int j = 0; j < percentile.get(i).length; j++){
-      iArray.setFloat(j, percentile.get(i)[j]);
+    g.writeEndArray();
+    g.writeArrayFieldStart("percentiles");
+    for(int i = 0; i < percentile.size();  i++){
+      g.writeStartArray();
+      for(int j = 0; j < percentile.get(i).length; j++){
+        g.writeNumber(percentile.get(i)[j]);
+      }
+      g.writeEndArray();
     }
-    percentiles.setJSONArray(i,iArray);
-  }
-  object.setJSONArray("percentiles", percentiles);
-  JSONArray species = new JSONArray();
-  for(int i = 0; i < speciesCounts.size();  i++){
-    JSONArray iArray = new JSONArray();
-    for(int j = 0; j < speciesCounts.get(i).length; j++){
-      iArray.setInt(j, speciesCounts.get(i)[j]);
+    g.writeEndArray();
+    g.writeArrayFieldStart("species");
+    for(int i = 0; i < speciesCounts.size();  i++){
+      g.writeStartArray();
+      for(int j = 0; j < speciesCounts.get(i).length; j++){
+        g.writeNumber(speciesCounts.get(i)[j]);
+      }
+      g.writeEndArray();
     }
-    species.setJSONArray(i,iArray);
+    g.writeEndArray();
+    g.writeArrayFieldStart("creatureArray");
+    for(int i = 0; i < c.length; i++){
+      g.writeStartObject(); c[i].saveToJson(g); g.writeEndObject();
+    }
+    g.writeEndArray();
+    g.writeArrayFieldStart("topSpecies");
+    for(int i = 0; i < topSpeciesCounts.size(); i++){
+      g.writeNumber(topSpeciesCounts.get(i));
+    }
+    g.writeEndArray();
+  } catch(Exception e){
+    writeToErrorLog(e);
   }
-  object.setJSONArray("species", species);
-  JSONArray cArray = new JSONArray();
-  for(int i = 0; i < c.length; i++){
-    cArray.setJSONObject(i, c[i].saveToJson());
-  }
-  JSONArray topSpeciesArray = new JSONArray();
-  for(int i = 0; i < topSpeciesCounts.size(); i++){
-    topSpeciesArray.setInt(i, topSpeciesCounts.get(i));
-  }
-  object.setJSONArray("topSpecies", topSpeciesArray);
-  object.setJSONArray("c", cArray);
-  
-  object.setFloat("foodChange", foodAngleChange);
-  object.setInt("gen", gen);
-  object.setInt("nbcreatures", nbCreatures);
-  object.setInt("gridX", gridX);
-  object.setInt("gridY", gridY);
-  return object;
 }
 
-public void loadFromJson(JSONObject parent){
-  SEED = parent.getInt("seed");
-  creatureDatabase.clear();
-  JSONArray creatureArray = parent.getJSONArray("creatures");
-  for(int i = 0; i < creatureArray.size(); i++){
-    Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, 0, null, new float[100][3]);
-    creature.loadFromJson(creatureArray.getJSONObject(i));
-    creatureDatabase.add(creature);
-  }
-  barCounts.clear();
-  JSONArray bars = parent.getJSONArray("bars");
-  for(int i = 0; i < bars.size(); i++){
-    JSONArray iArray = bars.getJSONArray(i);
-    Integer[] array = new Integer[iArray.size()];
-    for(int j = 0; j < iArray.size(); j++){
-      array[j] = iArray.getInt(j);
+public void loadFromJson(JsonParser p){
+  try{
+    if (p.nextToken() != JsonToken.START_OBJECT) {
+      throw new IOException("Expected data to start with an Object");
     }
-    barCounts.add(array);
+    while(p.nextToken() != JsonToken.END_OBJECT){
+      String fieldName = p.getCurrentName();
+      JsonToken token = p.nextToken();
+      if(fieldName.equals("seed")){ SEED = p.getIntValue(); }
+      else if(fieldName.equals("foodChange")){ foodAngleChange = p.getFloatValue(); }
+      else if(fieldName.equals("gen")){ gen = p.getIntValue(); genSelected = gen; }
+      else if(fieldName.equals("nbcreatures")){ nbCreatures = p.getIntValue(); initPercentiles(); }
+      else if(fieldName.equals("gridX")){ gridX = p.getIntValue(); }
+      else if(fieldName.equals("gridY")){ gridX = p.getIntValue(); }
+      else if(fieldName.equals("creatureDatabase")){
+        creatureDatabase.clear();
+        if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+        while((token = p.nextToken()) != JsonToken.END_ARRAY){
+          if (token == JsonToken.START_OBJECT){
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, 0, null, new float[100][3]);
+            creature.loadFromJson(p);
+            creatureDatabase.add(creature);
+          }
+        }
+      }
+      else if(fieldName.equals("barCounts")){
+        barCounts.clear();
+        if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+        int i = 0;
+        while((token = p.nextToken()) != JsonToken.END_ARRAY){
+          if (token == JsonToken.START_ARRAY){
+            int j = 0;
+            Integer[] tmpBar = new Integer[barLen];
+            while(p.nextToken() != JsonToken.END_ARRAY){
+              tmpBar[j] = p.getIntValue();
+              j += 1;
+            }
+            barCounts.add(tmpBar);
+            i += 1;
+          }
+        }          
+      }
+      else if(fieldName.equals("percentiles")){
+        percentile.clear();
+        if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+        while((token = p.nextToken()) != JsonToken.END_ARRAY){
+          if (token == JsonToken.START_ARRAY){
+            int j = 0;
+            Float[] tmpPercentile = new Float[29];
+            while(p.nextToken() != JsonToken.END_ARRAY){
+              tmpPercentile[j] = p.getFloatValue();
+              j += 1;
+            }
+            percentile.add(tmpPercentile);
+          }
+        }          
+      }
+      else if(fieldName.equals("species")){
+        speciesCounts.clear();
+        if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+        while((token = p.nextToken()) != JsonToken.END_ARRAY){
+          if (token == JsonToken.START_ARRAY){
+            int j = 0;
+            Integer[] tmpSpecies = new Integer[101];
+            while(p.nextToken() != JsonToken.END_ARRAY){
+              tmpSpecies[j] = p.getIntValue();
+              j += 1;
+            }
+            speciesCounts.add(tmpSpecies);
+          }
+        }          
+      }
+      else if(fieldName.equals("topSpecies")){
+        topSpeciesCounts.clear();
+        if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+        while(p.nextToken() != JsonToken.END_ARRAY){
+          topSpeciesCounts.add(p.getIntValue());
+        }
+      }
+      else if(fieldName.equals("creatureArray")){
+        c = new Creature[nbCreatures];
+        if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
+        int i = 0;
+        while((token = p.nextToken()) != JsonToken.END_ARRAY){
+          if (token == JsonToken.START_OBJECT){
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, 0, null, new float[100][3]);
+            creature.loadFromJson(p);
+            c[i] = creature;
+            c2.add(c[i]);
+            i += 1;
+          }
+        }
+      }
+    } 
+  } catch(Exception e){
+    writeToErrorLog(e);
   }
-  percentile.clear();
-  JSONArray percentiles = parent.getJSONArray("percentiles");
-  for(int i = 0; i < percentiles.size(); i++){
-    JSONArray iArray = percentiles.getJSONArray(i);
-    Float[] array = new Float[iArray.size()];
-    for(int j = 0; j < iArray.size(); j++){
-      array[j] = iArray.getFloat(j);
-    }
-    percentile.add(array);
-  }
-  speciesCounts.clear();
-  JSONArray species = parent.getJSONArray("species");
-  for(int i = 0; i < species.size(); i++){
-    JSONArray iArray = species.getJSONArray(i);
-    Integer[] array = new Integer[iArray.size()];
-    for(int j = 0; j < iArray.size(); j++){
-      array[j] = iArray.getInt(j);
-    }
-    speciesCounts.add(array);
-  }
-  nbCreatures = parent.getInt("nbcreatures");
-  gridX = parent.getInt("gridX");
-  gridY = parent.getInt("gridY");
-  initPercentiles();
-  c = new Creature[nbCreatures];
-  JSONArray cArray = parent.getJSONArray("c");
-  for(int i = 0; i < cArray.size(); i++){
-    Creature temp = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, 0, null, new float[100][3]);
-    temp.loadFromJson(cArray.getJSONObject(i));
-    c[i] = temp;
-    c2.add(c[i]);
-  }
-  topSpeciesCounts.clear();
-  JSONArray topSpeciesArray = parent.getJSONArray("topSpecies");
-  for(int i = 0; i < topSpeciesArray.size(); i++){
-    topSpeciesCounts.add(topSpeciesArray.getInt(i));
-  }
-  foodAngleChange = parent.getFloat("foodChange");
-  gen = parent.getInt("gen");
-  genSelected = gen;
 }
