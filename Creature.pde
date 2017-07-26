@@ -61,8 +61,9 @@ class Creature {
     this.brain.changeBrainStructure(BRAIN_WIDTH, this.getBrainHeight(), rowInsertionIndex,rowRemovalIndex);
   }
   Creature modified(int id, float mutationFactor) {
-    float modMut = mutationFactor * mutability;
-    if(mutationFactor > 1.0 && modMut < 1.0){ modMut = 1.5; mutability = 1.0; }
+    float modMut;
+    if(mutationFactor == 1.0){ mutationFactor = mutability; modMut = mutability; }
+    else{ modMut = mutability; }
     ArrayList<Node> newN = new ArrayList<Node>(0);
     ArrayList<Muscle> newM = new ArrayList<Muscle>(0);
     for (int i = 0; i < this.n.size(); i++) {
@@ -73,21 +74,30 @@ class Creature {
     }
     
     boolean bigMutAddNode = false, bigMutRemoveNode = false, bigMutAddMuscle = false, bigMutRemoveMuscle = false;
-    if (random(0, 1) < bigMutationChance*modMut || this.n.size() <= 2){ bigMutAddNode = true; }
-    if (random(0, 1) < bigMutationChance*modMut) { bigMutAddMuscle = true; }
-    if (random(0, 1) < bigMutationChance*modMut && this.n.size() >= 5) { bigMutRemoveNode = true; }
-    if (random(0, 1) < bigMutationChance*modMut && this.m.size() >= 2) { bigMutRemoveMuscle = true; }
+    boolean bigMutExpandBrain = false;
+    if (random(0, 1) < bigMutationChance*mutationFactor || this.n.size() <= 2){ bigMutAddNode = true; }
+    if (random(0, 1) < bigMutationChance*mutationFactor) { bigMutAddMuscle = true; }
+    if (random(0, 1) < bigMutationChance*mutationFactor && this.n.size() >= 5) { bigMutRemoveNode = true; }
+    if (random(0, 1) < bigMutationChance*mutationFactor && this.m.size() >= 2) { bigMutRemoveMuscle = true; }
+    if (random(0, 1) < bigMutationChance*mutationFactor && this.brain.BRAIN_WIDTH < 5) { bigMutExpandBrain = true; }
     
     int[] newName = new int[2];
-    if(bigMutAddNode || bigMutRemoveNode || bigMutAddMuscle || bigMutRemoveMuscle){
+    if(bigMutAddNode || bigMutRemoveNode || bigMutAddMuscle || bigMutRemoveMuscle || bigMutExpandBrain){
       newName = getNewCreatureName();
     } else {
       newName[0] = name[0];
       newName[1] = CREATURES_PER_PATRON[name[0]];
       CREATURES_PER_PATRON[name[0]]++;
     }
+    
+    Brain tmpBrain;
+    if(bigMutExpandBrain){
+      tmpBrain = this.brain.copyExpandedBrain();
+    } else {
+      tmpBrain = this.brain.copyMutatedBrain();
+    }
     Creature modifiedCreature = new Creature(newName, id, 
-    newN, newM, 0, true, creatureTimer+r()*16*modMut, min(mutability*random(0.8, 1.25), 2), this.brain.copyMutatedBrain(),null);
+    newN, newM, 0, true, creatureTimer+r()*16*modMut, min(mutability*random(0.8, 1.25), 2), tmpBrain,null);
     if (bigMutAddNode) { //Add a node
       modifiedCreature.addRandomNode();
     }

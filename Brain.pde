@@ -18,7 +18,7 @@ class Brain {
       for(int x = 0; x < BRAIN_WIDTH-1; x++){
         for(int y = 0; y < BRAIN_HEIGHT; y++){
           for(int z = 0; z < BRAIN_HEIGHT-1; z++){
-            axons[x][y][z] = new Axon(templateAxons[x][y][z].weight,templateAxons[x][y][z].mutability);
+            axons[x][y][z] = templateAxons[x][y][z].copyAxon();
           }
         }
       }
@@ -139,6 +139,24 @@ class Brain {
   }
   Brain copyMutatedBrain(){
     return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons.clone(),false,true);
+  }
+  Brain copyExpandedBrain(){
+    Axon[][][] extaxons = new Axon[BRAIN_WIDTH][BRAIN_HEIGHT][BRAIN_HEIGHT-1];
+    for(int x = 0; x < BRAIN_WIDTH; x++){
+        for(int y = 0; y < BRAIN_HEIGHT; y++){
+          for(int z = 0; z < BRAIN_HEIGHT-1; z++){
+            if(x < BRAIN_WIDTH - 1){ extaxons[x][y][z] = axons[x][y][z].copyAxon(); }
+            if(x == BRAIN_WIDTH - 1){ 
+              if(y == z){
+                extaxons[x][y][z] = new Axon(1.0,AXON_START_MUTABILITY);
+              } else {
+                extaxons[x][y][z] = new Axon(0.0,AXON_START_MUTABILITY);
+              }
+            }
+          }
+        }
+      }
+    return new Brain(BRAIN_WIDTH+1,BRAIN_HEIGHT,extaxons.clone(),false,false);
   }
   public void drawBrain(float scaleUp, Creature owner){
     ArrayList<Node> n = owner.n;

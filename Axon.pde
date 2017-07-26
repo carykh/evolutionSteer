@@ -11,6 +11,9 @@ class Axon {
     MUTATE_MULTI = Math.pow(0.5,mutatePower);
   }
   
+  public Axon copyAxon(){
+    return new Axon(this.weight,this.mutability);
+  }
   public Axon mutateAxon(){
     double mutabilityMutate = Math.pow(0.5,pmRan()*MUTABILITY_MUTABILITY);
     return new Axon(weight+r()*mutability/MUTATE_MULTI,mutability*mutabilityMutate);
