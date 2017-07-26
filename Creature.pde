@@ -60,9 +60,6 @@ class Creature {
   void changeBrainStructure(int rowInsertionIndex, int rowRemovalIndex){
     this.brain.changeBrainStructure(BRAIN_WIDTH, this.getBrainHeight(), rowInsertionIndex,rowRemovalIndex);
   }
-  public float sigmoid(float input){
-    return 1.0/(1.0+pow(2.71828182846,-input));
-  }
   Creature modified(int id, float mutationFactor) {
     float modMut = mutationFactor * mutability;
     if(mutationFactor > 1.0 && modMut < 1.0){ modMut = 1.5; mutability = 1.0; }

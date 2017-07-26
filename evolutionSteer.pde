@@ -140,6 +140,7 @@ int[] CREATURES_PER_PATRON = new int[PATRON_COUNT];
 float startingFoodDistance = 0;
 
 int THREAD_COUNT = 14;
+boolean activateMultiThreading = true;
 
 float inter(int a, int b, float offset) {
   return float(a)+(float(b)-float(a))*offset;
@@ -1131,18 +1132,25 @@ void draw() {
           lastIndex = (int)((i+1) * float(nbCreatures) / threads.length);
         }
         threads[i] = new Thread(new ComputingThread(firstIndex, lastIndex, simDuration*frames));
-        threads[i].start();
+        if(activateMultiThreading){
+          threads[i].start();
+        }
         previousLastIndex = lastIndex;
       }
       for(int i = 0; i < threads.length; i++) {
         try {
-          threads[i].join();
+          if(activateMultiThreading){
+            threads[i].join();
+          } else {
+            threads[i].run();
+          }
         } catch (InterruptedException ie) {
           ie.printStackTrace(); // :(
         }
       }
       double simulationTime = Math.round((System.nanoTime() - start) / 100000D) / 10;
       surface.setTitle("evolutionSteer | simulationTime: " + simulationTime + " ms");
+      //println(simulationTime);
       setMenu(6);
     }
   }
@@ -1429,7 +1437,6 @@ void draw() {
                 }
                 Files.move(source, Paths.get(finalfilename));
               } catch(Exception e){
-                println(e);
                 writeToErrorLog(e);
               }
             }

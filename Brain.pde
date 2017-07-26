@@ -114,7 +114,22 @@ class Brain {
     }
   }
   public float sigmoid(float input){
-    return 1.0/(1.0+pow(2.71828182846,-input));
+    //return 1.0/(1.0+pow(2.71828182846,-input));
+    if(input >= -1 && input <= 1){
+       return 0.25*input+0.5;
+    } else if(input >= -3 && input < -1){
+       return 0.105*input+0.1192;
+    } else if(input > 1 && input <= 3){
+       return 0.105*input+0.8808;
+    } else if(input >= -5 && input < -3){
+       return 0.0177*input+0.018;
+    } else if(input > 3 && input <= 5){
+       return 0.0177*input+0.982;
+    } else if(input < -5){
+       return 0;
+    } else {
+       return 1;
+    }
   }
   Brain getUsableCopyOfBrain(){
     return new Brain(BRAIN_WIDTH,BRAIN_HEIGHT,axons.clone(),true,false);
