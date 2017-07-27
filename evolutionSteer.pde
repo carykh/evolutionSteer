@@ -605,6 +605,9 @@ void mouseReleased() {
   }else if(menu == 1 && gen !=  -1 && abs(mX - 650) <= 50 && abs(mY - 90) <= 20){
     setMenu(15);
     selectOutput("Select file to save simulation to",  "saveSelected");
+  }else if(menu == 1 && gen !=  -1 && abs(mX - 505) <= 85 && abs(mY - 90) <= 20){
+    setMenu(15);
+    selectOutput("Select file to save simulation to",  "saveSelectedLight");
   }else if (menu == 3 && abs(mX-1030) <= 130 && abs(mY-684) <= 20) {
     gen = 0;
     setMenu(1);
@@ -1021,7 +1024,7 @@ void draw() {
     background(255, 200, 130);
     textFont(font, 32);
     textAlign(LEFT);
-    textFont(font, 96);
+    textFont(font, 72);
     text("GEN "+max(genSelected, 0), 20, 100);
     textFont(font, 28);
     if (gen == -1) {
@@ -1037,6 +1040,7 @@ void draw() {
       rect(760, 70, 460, 40);
       rect(760, 120, 230, 40);
       rect(600, 70, 100, 40);
+      rect(420, 70, 170, 40);
       if (gensToDo >= 2) {
         fill(128, 255, 128);
       } else {
@@ -1055,6 +1059,7 @@ void draw() {
       text("Do gens ALAP.", 1000, 150);
       text("Median "+fitnessName, 50, 160);
       text("Save", 610, 100);
+      text("Light save", 430, 100);
       textAlign(CENTER);
       textAlign(RIGHT);
       text(float(round(percentile.get(min(genSelected, percentile.size()-1))[14]*nbCreatures))/nbCreatures+" "+fitnessUnit, 700, 160);
@@ -1374,10 +1379,8 @@ void draw() {
         j2 = nbCreatures-1-j;
         j3 = j;
       }
-      Creature cj = c2.get(j2);
-      cj.alive = true;
-      Creature ck = c2.get(j3);
-      ck.alive = false;
+      c2.get(j2).alive = true;
+      c2.get(j3).alive = false;
     }
     if (stepbystep) {
       drawScreenImage(2);
@@ -1760,13 +1763,19 @@ public void fileSelected(File file){
 }
 
 public void saveSelected(File file){
+  saveFunc(file, false);
+}
+public void saveSelectedLight(File file){
+  saveFunc(file, true);
+}
+public void saveFunc(File file, boolean light){
   if(file != null){
     try{
       JsonFactory factory = new SmileFactory();
       GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(file.getAbsolutePath()));
       JsonGenerator generator = factory.createGenerator(out, JsonEncoding.UTF8);
       generator.writeStartObject();
-      saveToJson(generator);
+      saveToJson(generator, light);
       generator.writeEndObject();
       generator.close();
       out.close();
@@ -1780,24 +1789,32 @@ public void saveSelected(File file){
   }
 }
 
-public void saveToJson(JsonGenerator g){
+public void saveToJson(JsonGenerator g, boolean light){
   try{
     g.writeNumberField("version", 1);
     g.writeNumberField("seed", SEED);
     g.writeNumberField("foodChange", foodAngleChange);
-    g.writeNumberField("gen", gen);
+    if(light) { g.writeNumberField("gen", 1); }
+    else { g.writeNumberField("gen", gen); }
     g.writeNumberField("nbcreatures", nbCreatures);
     g.writeNumberField("gridX", gridX);
     g.writeNumberField("gridY", gridY);
+    
+    int l = 0, l2 = -1;
+    if(light) { l = creatureDatabase.size() - 6; }
     g.writeArrayFieldStart("creatureDatabase");
-    for(int i = 0; i < creatureDatabase.size(); i++){
+    for(int i = l; i < creatureDatabase.size(); i++){
       if(creatureDatabase.get(i) != null){
-        g.writeStartObject(); creatureDatabase.get(i).saveToJson(g); g.writeEndObject();
+        if(light) { l2 = i - creatureDatabase.size() + 6; }
+        g.writeStartObject(); creatureDatabase.get(i).saveToJson(g, l2); g.writeEndObject();
       }
     }
     g.writeEndArray();
+    
+    l = 0;
+    if(light) { l = barCounts.size() - 2; }
     g.writeArrayFieldStart("barCounts");
-    for(int i = 0; i < barCounts.size();  i++){
+    for(int i = l; i < barCounts.size();  i++){
       g.writeStartArray();
       for(int j = 0; j < barCounts.get(i).length; j++){
         g.writeNumber(barCounts.get(i)[j]);
@@ -1805,8 +1822,11 @@ public void saveToJson(JsonGenerator g){
       g.writeEndArray();
     }
     g.writeEndArray();
+    
+    l = 0;
+    if(light) { l = percentile.size() - 2; }
     g.writeArrayFieldStart("percentiles");
-    for(int i = 0; i < percentile.size();  i++){
+    for(int i = l; i < percentile.size();  i++){
       g.writeStartArray();
       for(int j = 0; j < percentile.get(i).length; j++){
         g.writeNumber(percentile.get(i)[j]);
@@ -1814,8 +1834,11 @@ public void saveToJson(JsonGenerator g){
       g.writeEndArray();
     }
     g.writeEndArray();
+    
+    l = 0;
+    if(light) { l = speciesCounts.size() - 2; }
     g.writeArrayFieldStart("species");
-    for(int i = 0; i < speciesCounts.size();  i++){
+    for(int i = l; i < speciesCounts.size();  i++){
       g.writeStartArray();
       for(int j = 0; j < speciesCounts.get(i).length; j++){
         g.writeNumber(speciesCounts.get(i)[j]);
@@ -1823,13 +1846,19 @@ public void saveToJson(JsonGenerator g){
       g.writeEndArray();
     }
     g.writeEndArray();
+    
+    l2 = -1;
     g.writeArrayFieldStart("creatureArray");
     for(int i = 0; i < c.length; i++){
-      g.writeStartObject(); c[i].saveToJson(g); g.writeEndObject();
+      if(light) { l2 = i + nbCreatures + 1; }
+      g.writeStartObject(); c[i].saveToJson(g, l2); g.writeEndObject();
     }
     g.writeEndArray();
+    
+    l = 0;
+    if(light) { l = topSpeciesCounts.size() - 2; }
     g.writeArrayFieldStart("topSpecies");
-    for(int i = 0; i < topSpeciesCounts.size(); i++){
+    for(int i = l; i < topSpeciesCounts.size(); i++){
       g.writeNumber(topSpeciesCounts.get(i));
     }
     g.writeEndArray();
