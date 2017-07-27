@@ -47,6 +47,7 @@ You can press certain commands during execution
 * Press **'"t"** to increase the variability of the food generation process. The food blob will be created relatively to the creature given a random angle which is contained between + and - the angle shown in the interface. You can reduce the variability by pressing **"g"**
 * Press **"y"** to reduce the gift (in seconds of supplemental simulation) given to the creature each time it encounters a food blob. Press **"h"** to increase this gift.
 * Press **left** and **right** arrow to select previous/next generation. Alternatively, you can use the slider in the interface.
+* Press **"k"** to instantly kill half your population. It is fun.
 
 At last you can save you creatures :
 
