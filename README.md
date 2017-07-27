@@ -12,6 +12,9 @@ You can either download zip file or typing the following command into your termi
 3. **Launch evolutionSteer** :
 You can then open evolutionSteer.pde and press the *RUN* button. That's it !
 
+4. Installing JacksonCore :
+If the program doesn’t launch because of dependancies trouble, please drag and drop the two .jar files in the *code* subdirectory onto the Processing window.
+
 # Configuration
 
 Most parameters are set at the beginning of the *evolutionSteer.pde* file. Noticeable parameters are:
