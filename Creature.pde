@@ -79,7 +79,10 @@ class Creature {
     if (random(0, 1) < bigMutationChance*mutationFactor) { bigMutAddMuscle = true; }
     if (random(0, 1) < bigMutationChance*mutationFactor && this.n.size() >= 5) { bigMutRemoveNode = true; }
     if (random(0, 1) < bigMutationChance*mutationFactor && this.m.size() >= 2) { bigMutRemoveMuscle = true; }
-    if (random(0, 1) < bigMutationChance*mutationFactor*(5-this.brain.BRAIN_WIDTH)/2 && this.brain.BRAIN_WIDTH < 5) { bigMutExpandBrain = true; }
+    if (random(0, 1) < bigMutationChance*mutationFactor*(5-this.brain.BRAIN_WIDTH)/2 && this.brain.BRAIN_WIDTH < 5) { 
+      bigMutExpandBrain = true; 
+      bigMutAddNode = false; bigMutRemoveNode = false; bigMutAddMuscle = false; bigMutRemoveMuscle = false;
+    }
     
     int[] newName = new int[2];
     if(bigMutAddNode || bigMutRemoveNode || bigMutAddMuscle || bigMutRemoveMuscle || bigMutExpandBrain){
