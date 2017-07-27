@@ -134,6 +134,7 @@ int freshBloodNumber = 10; // number of brand new creatures
 float radioactiveMutator = 1.5;
 
 boolean massExtinction = false;
+float massExtinctionPercentage = 0.99;
 
 String[] patronData;
 int PATRON_COUNT = 75;
@@ -1400,7 +1401,7 @@ void draw() {
       Creature cj = c2.get(j2);
       Creature cj2 = c2.get(nbCreatures-1-j2);
       
-      if(massExtinction && random(0,1) < 0.5){ // mass extinction
+      if(massExtinction && random(0,1) < massExtinctionPercentage){ // mass extinction
         c2.set(j2, createNewCreature(cj.id+nbCreatures-1)); // new creatures arises !
         c2.set(nbCreatures-1-j2, createNewCreature(cj2.id+nbCreatures-1));
       } else {
