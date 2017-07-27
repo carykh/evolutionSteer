@@ -1603,6 +1603,18 @@ void keyPressed(){
       enableRadioactivity = !enableRadioactivity;
       setMenu(1);
     }
+    if(key == 'y'){
+      giftForChompSec -= 0.5;
+      if(giftForChompSec < 0.5) { giftForChompSec = (float)0.5; }
+      giftForChompFrames = ceil(giftForChompSec*frames);
+      setMenu(1);
+    }
+    if(key == 'h'){
+      giftForChompSec += 0.5;
+      giftForChompFrames = ceil(giftForChompSec*frames);
+      setMenu(1);
+    }
+
     if(key == 'k'){
       massExtinction = true;
       setMenu(1);
