@@ -79,7 +79,7 @@ class Creature {
     if (random(0, 1) < bigMutationChance*mutationFactor) { bigMutAddMuscle = true; }
     if (random(0, 1) < bigMutationChance*mutationFactor && this.n.size() >= 5) { bigMutRemoveNode = true; }
     if (random(0, 1) < bigMutationChance*mutationFactor && this.m.size() >= 2) { bigMutRemoveMuscle = true; }
-    if (random(0, 1) < bigMutationChance*mutationFactor && this.brain.BRAIN_WIDTH < 5) { bigMutExpandBrain = true; }
+    if (random(0, 1) < bigMutationChance*mutationFactor*(5-this.brain.BRAIN_WIDTH)/2 && this.brain.BRAIN_WIDTH < 5) { bigMutExpandBrain = true; }
     
     int[] newName = new int[2];
     if(bigMutAddNode || bigMutRemoveNode || bigMutAddMuscle || bigMutRemoveMuscle || bigMutExpandBrain){
@@ -96,8 +96,14 @@ class Creature {
     } else {
       tmpBrain = this.brain.copyMutatedBrain();
     }
+    float newMut;
+    if(mutationFactor > 1){
+        newMut = max(min(mutability*random((float)0.8, (float)1.25), 2), (float)0.2);
+    } else {
+        newMut = min(mutability*random((float)0.8, (float)1.25), 2);
+    }
     Creature modifiedCreature = new Creature(newName, id, 
-    newN, newM, 0, true, creatureTimer+r()*16*modMut, min(mutability*random(0.8, 1.25), 2), tmpBrain,null);
+    newN, newM, 0, true, creatureTimer+r()*16*modMut, newMut, tmpBrain,null);
     if (bigMutAddNode) { //Add a node
       modifiedCreature.addRandomNode();
     }
@@ -342,7 +348,8 @@ class Creature {
     }
     if(hasNodeOffGround){
       float withinChomp = max(1.0-this.getCurrentFoodDistance()/this.startingFoodDistance,0);
-      return chomps+withinChomp;//cumulativeAngularVelocity/(n.size()-2)/pow(averageNodeNausea,0.3);//   /(2*PI)/(n.size()-2); //dist(0,0,averageX,averageZ)*0.2; // Multiply by 0.2 because a meter is 5 units for some weird reason.
+      float loss = (this.brain.BRAIN_WIDTH - 2)*(float)0.05; // loss function for brain width
+      return chomps+withinChomp-loss;//cumulativeAngularVelocity/(n.size()-2)/pow(averageNodeNausea,0.3);//   /(2*PI)/(n.size()-2); //dist(0,0,averageX,averageZ)*0.2; // Multiply by 0.2 because a meter is 5 units for some weird reason.
     }else{
       return 0;
     }
