@@ -25,7 +25,6 @@ class Creature {
     this.n = tn;
     this.d = td;
     this.alive = talive;
-    //this.creatureTimer = tct;
     this.mutability = tmut;
     if(newBrain != null){
       this.brain = newBrain;

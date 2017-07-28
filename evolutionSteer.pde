@@ -1999,7 +1999,7 @@ public void loadFromJson(JsonParser p){
         int i = 0;
         while((token = p.nextToken()) != JsonToken.END_ARRAY){
           if (token == JsonToken.START_OBJECT){
-            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, null, new float[100][3]);
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, null, null);
             creature.loadFromJson(p);
             c[i] = creature;
             c2.add(c[i]);
