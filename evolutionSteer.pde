@@ -9,8 +9,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
-import com.fasterxml.jackson.dataformat.smile.SmileFactory;
+//import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
+//import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 
 
 float windowSizeMultiplier = 1;
@@ -197,9 +197,6 @@ void drawGround(PGraphics img) {
       img.rect((averageX-20)*scaleToFixBug,-hazelStairs*i*scaleToFixBug,40*scaleToFixBug,hazelStairs*0.15*scaleToFixBug);
     }
   }*/
-}
-float toMuscleUsable(float f){
-  return min(max(f,0.8),1.2);
 }
 void drawPosts(PGraphics img) {
   float averageX = 0;
@@ -1766,8 +1763,7 @@ Creature createNewCreature(int index){
     float len = random(0.5,1.5);
     m.add(new Muscle(tc1, tc2, len, random(0.015, 0.06)));
   }
-  float heartbeat = random(40, 80);
-  return new Creature(null, index+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 0, true, heartbeat, 1.0, null, null); 
+  return new Creature(null, index+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 0, true, 1.0, null, null); 
 }
 public void writeToErrorLog(Exception e){
       String[] error = new String[100];
@@ -1781,7 +1777,7 @@ public void writeToErrorLog(Exception e){
 public void fileSelected(File file){
   if(file != null){
     try{
-      JsonFactory factory = new SmileFactory();
+      JsonFactory factory = new JsonFactory();
       JsonParser p = factory.createParser(new GZIPInputStream(new FileInputStream(file.getAbsolutePath())));
       loadFromJson(p);
       setMenu(1);
@@ -1803,7 +1799,7 @@ public void saveSelectedLight(File file){
 public void saveFunc(File file, boolean light){
   if(file != null){
     try{
-      JsonFactory factory = new SmileFactory();
+      JsonFactory factory = new JsonFactory();
       GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(file.getAbsolutePath()));
       JsonGenerator generator = factory.createGenerator(out, JsonEncoding.UTF8);
       generator.writeStartObject();
@@ -1823,7 +1819,7 @@ public void saveFunc(File file, boolean light){
 
 public void saveToJson(JsonGenerator g, boolean light){
   try{
-    g.writeNumberField("version", 3);
+    g.writeNumberField("version", 4);
     g.writeNumberField("seed", SEED);
     g.writeNumberField("foodChange", foodAngleChange);
     g.writeNumberField("giftForChompSec", giftForChompSec);
@@ -1910,7 +1906,7 @@ public void loadFromJson(JsonParser p){
       JsonToken token = p.nextToken();
       if(fieldName.equals("seed")){ SEED = p.getIntValue(); }
       else if(fieldName.equals("version")){
-        if(p.getFloatValue() < 3){ println("WARNING file may be incompatible"); }
+        if(p.getFloatValue() < 4){ println("WARNING file may be incompatible"); }
       }
       else if(fieldName.equals("foodChange")){ foodAngleChange = p.getFloatValue(); }
       else if(fieldName.equals("gen")){ gen = p.getIntValue(); genSelected = gen; }
@@ -1925,7 +1921,7 @@ public void loadFromJson(JsonParser p){
         if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
         while((token = p.nextToken()) != JsonToken.END_ARRAY){
           if (token == JsonToken.START_OBJECT){
-            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, 0, null, new float[100][3]);
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, null, null);
             creature.loadFromJson(p);
             creatureDatabase.add(creature);
           }
@@ -1991,7 +1987,7 @@ public void loadFromJson(JsonParser p){
         int i = 0;
         while((token = p.nextToken()) != JsonToken.END_ARRAY){
           if (token == JsonToken.START_OBJECT){
-            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, 0, null, new float[100][3]);
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, null, new float[100][3]);
             creature.loadFromJson(p);
             c[i] = creature;
             c2.add(c[i]);

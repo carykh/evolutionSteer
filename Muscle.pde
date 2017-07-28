@@ -75,8 +75,6 @@ class Muscle {
       g.writeNumberField("c2", this.c2);
       g.writeNumberField("len", this.len);
       g.writeNumberField("rigidity", this.rigidity);
-      g.writeNumberField("previousTarget", this.previousTarget);
-      g.writeNumberField("brainOutput", this.brainOutput);
     } catch(Exception e){
         writeToErrorLog(e);
     }
@@ -91,8 +89,6 @@ class Muscle {
          else if(fieldName.equals("c2")){ this.c2 = p.getIntValue(); }
          else if(fieldName.equals("len")){ this.len = p.getFloatValue(); }
          else if(fieldName.equals("rigidity")){ this.rigidity = p.getFloatValue(); }
-         else if(fieldName.equals("previousTarget")){ this.previousTarget = p.getFloatValue(); }
-         else if(fieldName.equals("brainOutput")){ this.brainOutput = p.getFloatValue(); }
        }
     } catch(Exception e){
       writeToErrorLog(e);

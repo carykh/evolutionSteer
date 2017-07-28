@@ -4,7 +4,6 @@ class Creature {
   float d;
   int id;
   boolean alive;
-  float creatureTimer;
   float mutability;
   Brain brain;
   int[] name;
@@ -20,13 +19,13 @@ class Creature {
   float energy = baselineEnergy;
   float startingFoodDistance = 9999;
   
-  Creature(int[] tname, int tid, ArrayList<Node> tn, ArrayList<Muscle> tm, float td, boolean talive, float tct, float tmut, Brain newBrain, float[][] tfoodpos) {
+  Creature(int[] tname, int tid, ArrayList<Node> tn, ArrayList<Muscle> tm, float td, boolean talive, float tmut, Brain newBrain, float[][] tfoodpos) {
     this.id = tid;
     this.m = tm;
     this.n = tn;
     this.d = td;
     this.alive = talive;
-    this.creatureTimer = tct;
+    //this.creatureTimer = tct;
     this.mutability = tmut;
     if(newBrain != null){
       this.brain = newBrain;
@@ -47,11 +46,7 @@ class Creature {
         this.foodPositions[i][2] = random(0,1);
       }
     }else{
-      for(int i = 0; i < 100; i++){
-        this.foodPositions[i][0] = tfoodpos[i][0];
-        this.foodPositions[i][1] = tfoodpos[i][1];
-        this.foodPositions[i][2] = tfoodpos[i][2];
-      }
+      this.foodPositions = tfoodpos.clone();
     }
   }
   int getBrainHeight(){
@@ -106,7 +101,7 @@ class Creature {
         newMut = min(mutability*random((float)0.8, (float)1.25), 2);
     }
     Creature modifiedCreature = new Creature(newName, id, 
-    newN, newM, 0, true, creatureTimer+r()*16*modMut, newMut, tmpBrain,null);
+    newN, newM, 0, true, newMut, tmpBrain,null);
     if (bigMutAddNode) { //Add a node
       modifiedCreature.addRandomNode();
     }
@@ -273,7 +268,7 @@ class Creature {
     if(withUsableBrain){
       newBrain = this.brain.getUsableCopyOfBrain();
     }
-    return new Creature(this.name, newID, n2, m2, this.d, this.alive, this.creatureTimer,
+    return new Creature(this.name, newID, n2, m2, this.d, this.alive,
                         this.mutability,newBrain,newFoodPositions);
   }
   void drawCreature(PGraphics img, Boolean putInFrontOfBack) {
@@ -401,7 +396,6 @@ class Creature {
       if(overwriteId == -1) { g.writeNumberField("id", id); }
       else { g.writeNumberField("id", overwriteId); }
       g.writeBooleanField("alive", alive);
-      g.writeNumberField("creatureTimer", creatureTimer);
       g.writeNumberField("mutability", mutability);
       g.writeArrayFieldStart("name");g.writeNumber(name[0]);g.writeNumber(name[1]);g.writeEndArray();
       if(n != null){
@@ -418,15 +412,6 @@ class Creature {
         }
         g.writeEndArray();
       }
-      g.writeArrayFieldStart("foodPositions");
-      for(int i = 0; i < foodPositions.length; i++){
-        g.writeStartArray();
-        for(int j = 0; j < foodPositions[i].length; j++){
-          g.writeNumber(foodPositions[i][j]);
-        }
-        g.writeEndArray();
-      }
-      g.writeEndArray();
       g.writeObjectFieldStart("brain"); this.brain.saveToJson(g); g.writeEndObject();
     } catch(Exception e){
         writeToErrorLog(e);
@@ -441,7 +426,6 @@ class Creature {
          if(fieldName.equals("d")){ d = p.getFloatValue(); }
          else if(fieldName.equals("id")){ id = p.getIntValue(); }
          else if(fieldName.equals("alive")){ alive = p.getBooleanValue(); }
-         else if(fieldName.equals("creatureTimer")){ creatureTimer = p.getFloatValue(); }
          else if(fieldName.equals("mutability")){ mutability = p.getFloatValue(); }
          else if(fieldName.equals("name")){ 
            if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
@@ -477,21 +461,6 @@ class Creature {
            if (token != JsonToken.START_OBJECT) { throw new IOException("Expected Object"); }
            brain = new Brain(1, 1);
            brain.loadFromJson(p);
-         }
-         else if(fieldName.equals("foodPositions")){
-           if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
-           int i = 0;
-           foodPositions = new float[100][3];
-           while((token = p.nextToken()) != JsonToken.END_ARRAY){
-             if (token == JsonToken.START_ARRAY){
-               int j = 0;
-               while(p.nextToken() != JsonToken.END_ARRAY){
-                 foodPositions[i][j] = p.getFloatValue();
-                 j += 1;
-               }
-             }
-             i += 1;
-           }
          }
        }
     } catch(Exception e) {  writeToErrorLog(e); }
