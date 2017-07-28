@@ -13,11 +13,14 @@ public class ComputingThread implements Runnable{
         myCreature = c[k].copyCreature(-1,false,true);
         myCreature.calculateNextFoodLocation();
         int myMaxFrames = maxFrames;
+        int currentChomp = 0;
         boolean isJumper = false;
         for (int sim = 0; sim < myMaxFrames; sim++) {
           if(myCreature.simulate()){ // activated when chomped
             if(sim <= jumperFrames){ isJumper = true; break; } // we kill jumpers
             myMaxFrames += giftForChompFrames;
+            currentChomp++;
+            if(currentChomp > 100){ break; }
           }
         }
         if(isJumper){
