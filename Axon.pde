@@ -8,7 +8,7 @@ class Axon {
   public Axon(double w, double m){
     weight = w;
     mutability = m;
-    MUTATE_MULTI = Math.pow(0.5,mutatePower);
+    MUTATE_MULTI = Math.pow(0.8,mutatePower);
   }
   
   public Axon copyAxon(){

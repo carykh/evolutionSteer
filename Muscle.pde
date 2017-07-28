@@ -9,12 +9,12 @@ class Muscle {
     this.c1 = tc1;
     this.c2 = tc2;
     this.rigidity = trigidity;
-    this.brainOutput = 1;
+    this.brainOutput = 0;
   }
   void applyForce(int i, ArrayList<Node> n, Creature owner) {
     float target = previousTarget;
     if(energyDirection == 1 || owner.energy >= 0.0001){
-      target = this.len*toMuscleUsable(this.brainOutput);
+      target = this.len*toMuscleUsable();
     }else{
       target = this.len;
     }
@@ -53,10 +53,13 @@ class Muscle {
 
     return new Muscle(newc1, newc2, newLen, newR);
   }
+  float toMuscleUsable(){
+    return (this.brainOutput/5)+1; // brain output should be a number between -1 and 1
+  }
   void drawMuscle(ArrayList<Node> n, PGraphics img) {
     Node ni1 = n.get(this.c1);
     Node ni2 = n.get(this.c2);
-    float w = toMuscleUsable(this.brainOutput)*0.15;
+    float w = toMuscleUsable()*0.15;
     img.strokeWeight(w*scaleToFixBug);
     float brownness = rigidity*13;
     img.stroke(255-180*brownness, 255-210*brownness, 255-255*brownness, 255);
