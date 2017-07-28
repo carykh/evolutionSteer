@@ -48,6 +48,7 @@ You can press certain commands during execution
 * Press **"y"** to reduce the gift (in seconds of supplemental simulation) given to the creature each time it encounters a food blob. Press **"h"** to increase this gift.
 * Press **left** and **right** arrow to select previous/next generation. Alternatively, you can use the slider in the interface.
 * Press **"k"** to instantly kill half your population. It is fun.
+* Press **"b"** to activate **BRAINIAC** mode. This will instantly add a neutron layer to each of your creatures. Be cautious as it is computationally intensive, irreversible and can lead to numerous deaths in your population.
 
 At last you can save you creatures :
 
