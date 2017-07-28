@@ -1,7 +1,6 @@
 class Node {
-  float x, y, z, vx, vy, vz, prevX, prevY, prevZ, pvx, pvy, pvz, m, f;
-  boolean safeInput;
-  float pressure;
+  float x, y, z, vx, vy, vz, prevX, prevY, prevZ, pvx, pvy, pvz, m, initf, f;
+  float pressure, brainOutput;
   Node(float tx, float ty, float tz,
   float tvx, float tvy, float tvz,
   float tm, float tf) {
@@ -12,10 +11,13 @@ class Node {
     this.pvy = vy = tvy;
     this.pvz = vz = tvz;
     this.m = tm;
-    this.f = tf;
+    this.initf = tf;
+    this.f = this.initf;
     this.pressure = 0;
+    this.brainOutput = (2*this.initf)-1;
   }
   void applyForces() {
+    this.f = toNodeUsable();
     this.vx *= airFriction;
     this.vy *= airFriction;
     this.vz *= airFriction;
@@ -27,6 +29,9 @@ class Node {
     this.pvx = vx;
     this.pvy = vy;
     this.pvz = vz;
+  }
+  float toNodeUsable(){
+    return (this.brainOutput+1)/2;
   }
   void applyGravity() {
     this.vy += gravity;
@@ -154,7 +159,7 @@ class Node {
     //float newM = m+r()*0.1*mutability;
     //newM = min(max(newM, 0.3), 0.5);
     float newM = 0.4;
-    float newF = min(max(this.f+r()*0.1*mutability, 0), 1);
+    float newF = min(max(this.initf+r()*0.1*mutability, 0), 1);
     Node newNode = new Node(newX, newY, newZ, 0, 0, 0, newM, newF);
     return newNode;//max(m+r()*0.1,0.2),min(max(f+r()*0.1,0),1)
   }
@@ -195,16 +200,8 @@ class Node {
       g.writeNumberField("vx", this.vx);
       g.writeNumberField("vy", this.vy);
       g.writeNumberField("vz", this.vz);
-      g.writeNumberField("prevX", this.prevX);
-      g.writeNumberField("prevY", this.prevY);
-      g.writeNumberField("prevZ", this.prevZ);
-      g.writeNumberField("pvx", this.pvx);
-      g.writeNumberField("pvy", this.pvy);
-      g.writeNumberField("pvz", this.pvz);
       g.writeNumberField("m", this.m);
-      g.writeNumberField("f", this.f);
-      g.writeBooleanField("safeInput", this.safeInput);
-      g.writeNumberField("pressure", this.pressure);
+      g.writeNumberField("f", this.initf);
     } catch(Exception e){
         writeToErrorLog(e);
     }
@@ -221,15 +218,11 @@ class Node {
          else if(fieldName.equals("vx")){ this.vx = p.getFloatValue(); }
          else if(fieldName.equals("vy")){ this.vy = p.getFloatValue(); }
          else if(fieldName.equals("vz")){ this.vz = p.getFloatValue(); }
-         else if(fieldName.equals("prevX")){ this.prevX = p.getFloatValue(); }
-         else if(fieldName.equals("prevY")){ this.prevY = p.getFloatValue(); }
-         else if(fieldName.equals("prevZ")){ this.prevZ = p.getFloatValue(); }
-         else if(fieldName.equals("pvx")){ this.pvx = p.getFloatValue(); }
-         else if(fieldName.equals("pvy")){ this.pvy = p.getFloatValue(); }
-         else if(fieldName.equals("pvz")){ this.pvz = p.getFloatValue(); }
          else if(fieldName.equals("m")){ this.m = p.getFloatValue(); }
-         else if(fieldName.equals("f")){ this.f = p.getFloatValue(); }
-         else if(fieldName.equals("safeInput")){ this.safeInput = p.getBooleanValue(); }
+         else if(fieldName.equals("f")){ 
+           this.f = this.initf = p.getFloatValue();
+           this.brainOutput = (2*this.initf)-1;
+         }
          else if(fieldName.equals("pressure")){ this.pressure = p.getFloatValue(); }
        }
     } catch(Exception e){
