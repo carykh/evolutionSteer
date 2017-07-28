@@ -1589,6 +1589,9 @@ void keyPressed(){
       if(genSelected > gen) { genSelected = gen; }
     } 
   } else {
+    if(key == 'b'){
+      brainiac();
+    }
     if(key == 't'){
       foodAngleChange += 5.0/360.0*(2*PI);
       setMenu(1);
@@ -1732,6 +1735,15 @@ String rankify(int s){
 }
 void setFitness(int i){
   c[i].d = currentCreature.getFitness();
+}
+
+void brainiac(){
+   for(int i = 0; i < c.length; i++){
+     c[i] = c[i].copyCreature(-1,true,false);
+     c[i].brain = c[i].brain.copyExpandedBrain();
+     //c[i] = c[i].modified(c[i].id, 1);
+   }
+   setMenu(4);
 }
 
 Creature createNewCreature(int index){
