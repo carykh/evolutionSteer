@@ -666,7 +666,7 @@ void drawScreenImage(int stage) {
   screenImage.noStroke();
   for (int j = 0; j < nbCreatures; j++) {
     Creature cj = c2.get(j);
-    if (stage == 3) cj = c[cj.id-(gen*nbCreatures)-(nbCreatures+1)];
+    if (stage == 3) cj = c[cj.id%nbCreatures];
     int j2 = j;
     if (stage == 0) {
       j2 = cj.id-(gen*nbCreatures)-1;
@@ -1615,7 +1615,6 @@ void keyPressed(){
       giftForChompFrames = ceil(giftForChompSec*frames);
       setMenu(1);
     }
-
     if(key == 'k'){
       massExtinction = true;
       setMenu(1);
@@ -1741,7 +1740,6 @@ void brainiac(){
    for(int i = 0; i < c.length; i++){
      c[i] = c[i].copyCreature(-1,true,false);
      c[i].brain = c[i].brain.copyExpandedBrain();
-     //c[i] = c[i].modified(c[i].id, 1);
    }
    setMenu(4);
 }
