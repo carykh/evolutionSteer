@@ -88,6 +88,7 @@ int maxSimulationFrames = maxFrames;
 int jumperFrames = jumperDuration*frames;
 float giftForChompSec = 15;
 int giftForChompFrames = ceil(giftForChompSec*frames);
+int maxChomp = 100; // maximum number of chomps before simulation ends
 int menu = 0;
 int gen = -1;
 float sliderX = 1170;

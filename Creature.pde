@@ -7,7 +7,7 @@ class Creature {
   float mutability;
   Brain brain;
   int[] name;
-  float[][] foodPositions = new float[100][3];
+  float[][] foodPositions = new float[maxChomp][3];
   float foodAngle = 0.0;
   float foodX = 0;
   float foodY = 0;
@@ -39,7 +39,7 @@ class Creature {
       this.name[1] = tname[1];
     }
     if(tfoodpos == null){
-      for(int i = 0; i < 100; i++){
+      for(int i = 0; i < maxChomp; i++){
         this.foodPositions[i][0] = random(-foodAngleChange,foodAngleChange);
         this.foodPositions[i][1] = random(-1.2,-0.55);
         this.foodPositions[i][2] = random(0,1);
@@ -348,7 +348,7 @@ class Creature {
       if(withinChomp >= 1){ withinChomp = 0.99; }
       float loss = (this.brain.BRAIN_WIDTH - 2)*(float)0.05; // loss function for brain width
       float fit = chomps+withinChomp-loss;//cumulativeAngularVelocity/(n.size()-2)/pow(averageNodeNausea,0.3);//   /(2*PI)/(n.size()-2); //dist(0,0,averageX,averageZ)*0.2; // Multiply by 0.2 because a meter is 5 units for some weird reason.
-      if(fit >= 100){ fit = 100; }
+      if(fit >= maxChomp){ fit = maxChomp; }
       return fit;
     }else{
       return 0;
@@ -382,8 +382,9 @@ class Creature {
       float distFromFood = dist(ni.x,ni.y,ni.z,this.foodX,this.foodY,this.foodZ);
       if(distFromFood <= 0.4){
         this.chomps++;
-        if (this.chomps < 10){ hasEaten = true; }
-        this.calculateNextFoodLocation();
+        hasEaten = true;
+        if(chomps >= maxChomp){ chomps = maxChomp; }
+        else { this.calculateNextFoodLocation(); }
       }
     }
     return hasEaten;

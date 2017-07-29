@@ -20,7 +20,7 @@ public class ComputingThread implements Runnable{
             if(sim <= jumperFrames){ isJumper = true; break; } // we kill jumpers
             myMaxFrames += giftForChompFrames;
             currentChomp++;
-            if(currentChomp > 100){ break; }
+            if(currentChomp >= maxChomp){ break; }
           }
         }
         if(isJumper){
