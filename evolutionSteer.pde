@@ -1864,7 +1864,7 @@ public void saveFunc(File file, boolean light){
 
 public void saveToJson(JsonGenerator g, boolean light){
   try{
-    g.writeNumberField("version", 4);
+    g.writeNumberField("version", 5);
     g.writeNumberField("seed", SEED);
     g.writeNumberField("foodChange", foodAngleChange);
     g.writeNumberField("giftForChompSec", giftForChompSec);
@@ -1951,7 +1951,7 @@ public void loadFromJson(JsonParser p){
       JsonToken token = p.nextToken();
       if(fieldName.equals("seed")){ SEED = p.getIntValue(); }
       else if(fieldName.equals("version")){
-        if(p.getFloatValue() < 4){ println("WARNING file may be incompatible"); }
+        if(p.getFloatValue() < 5){ println("WARNING file may be incompatible"); }
       }
       else if(fieldName.equals("foodChange")){ foodAngleChange = p.getFloatValue(); }
       else if(fieldName.equals("gen")){ gen = p.getIntValue(); genSelected = gen; }

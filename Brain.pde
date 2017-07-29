@@ -1,4 +1,6 @@
 class Brain {
+  float heartbeatInterval = (float)(Math.PI/12);
+  float timesUsed;
   float[][] neurons;
   Axon[][][] axons;
   int BRAIN_WIDTH = 0;
@@ -66,6 +68,7 @@ class Brain {
     }
   }
   void setUpBasics(int bw, int bh, Boolean haveNeurons){
+    timesUsed = 0;
     BRAIN_WIDTH = bw;
     BRAIN_HEIGHT = bh;
     if(haveNeurons){
@@ -96,6 +99,10 @@ class Brain {
       Node ni2 = n.get(am.c2);
       neurons[0][n.size()+i] = dist(ni1.x, ni1.y, ni1.z, ni2.x, ni2.y, ni2.z)/am.len;
     }
+    
+    neurons[0][n.size()+m.size()] = sin(heartbeatInterval*timesUsed);
+    timesUsed += 1;
+    
     for(int x = 1; x < BRAIN_WIDTH; x++){
       for(int y = 0; y < BRAIN_HEIGHT; y++){
         float total = 0;
