@@ -17,7 +17,9 @@ public class ComputingThread implements Runnable{
         boolean isJumper = false;
         for (int sim = 0; sim < myMaxFrames; sim++) {
           if(myCreature.simulate()){ // activated when chomped
-            if(sim <= jumperFrames){ isJumper = true; break; } // we kill jumpers
+            if(simDuration > jumperTruncate){
+              if(sim <= jumperFrames){ isJumper = true; break; } // we kill jumpers
+            }
             myMaxFrames += giftForChompFrames;
             currentChomp++;
             if(currentChomp >= maxChomp){ break; }

@@ -83,6 +83,7 @@ float camVA = -0.5;
 int frames = 60;
 int simDuration = 15; // in seconds
 int jumperDuration = 1; // definition of jumper : chomp < this value (in seconds)
+int jumperTruncate = 12; // remove jumper limitation when giftForChompSec is < to this value
 int maxFrames = simDuration*frames;
 int maxSimulationFrames = maxFrames;
 int jumperFrames = jumperDuration*frames;
