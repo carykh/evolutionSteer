@@ -93,6 +93,7 @@ class Brain {
       Node ni = n.get(i);
       neurons[0][i] = dist(ni.x, ni.y, ni.z, owner.foodX, owner.foodY, owner.foodZ);
     }
+    
     for(int i = 0; i < m.size(); i++){
       Muscle am = m.get(i);
       Node ni1 = n.get(am.c1);
