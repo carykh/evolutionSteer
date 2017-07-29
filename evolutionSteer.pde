@@ -1621,6 +1621,9 @@ void keyPressed(){
       massExtinction = true;
       setMenu(1);
     }
+    if(key == 'p'){
+      powerDouble();
+    }
   }
 }
 void drawStats(float x, float y, float z, float size){
@@ -1743,6 +1746,36 @@ void brainiac(){
      c[i] = c[i].copyCreature(-1,true,false);
      c[i].brain = c[i].brain.copyExpandedBrain();
    }
+   setMenu(4);
+}
+void powerDouble(){
+   Creature firstC = creatureDatabase.get((gen-1)*3);
+   Creature middleC = creatureDatabase.get((gen-1)*3+1);
+   Creature lastC = creatureDatabase.get((gen-1)*3+2);
+   Integer[] lastBarcount = barCounts.get(barCounts.size()-1);
+   Float[] lastPercentile = percentile.get(percentile.size()-1);
+   Integer[] lastSpeciesCounts = speciesCounts.get(speciesCounts.size()-1);
+   Integer lastTopSpeciesCounts = topSpeciesCounts.get(topSpeciesCounts.size()-1);
+  
+   gridY = gridY*2;
+   nbCreatures = nbCreatures*2; initPercentiles();
+   gen = 0;
+   genSelected = 0;
+   creaturesInPosition = new int[nbCreatures];
+   c2 = new ArrayList<Creature>();
+   for(int i = 0; i < c.length; i++){
+     c2.add(c[i]);
+   }
+   c = new Creature[nbCreatures];
+   for(int i = 0; i < c2.size(); i++){
+     c[i] = c[i+nbCreatures/2] = c2.get(i);
+   }
+   
+   creatureDatabase.clear();
+   barCounts.clear(); barCounts.add(lastBarcount);
+   percentile.clear(); percentile.add(lastPercentile);
+   speciesCounts.clear(); speciesCounts.add(lastSpeciesCounts);
+   topSpeciesCounts.clear(); topSpeciesCounts.add(lastTopSpeciesCounts);
    setMenu(4);
 }
 

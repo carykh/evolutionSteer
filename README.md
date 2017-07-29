@@ -49,6 +49,7 @@ You can press certain commands during execution
 * Press **left** and **right** arrow to select previous/next generation. Alternatively, you can use the slider in the interface.
 * Press **"k"** to instantly kill half your population. It is fun.
 * Press **"b"** to activate **BRAINIAC** mode. This will instantly add a neutron layer to each of your creatures. Be cautious as it is computationally intensive, irreversible and can lead to numerous deaths in your population.
+* Press **"p"** to instantly double the number of creatures in you batch. This will reset the timeline and hopefully double the computation time for each generation. Be careful for what you wish !
 
 At last you can save you creatures :
 
