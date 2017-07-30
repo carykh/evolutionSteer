@@ -129,6 +129,7 @@ int[] p = new int[29];
 final int BRAIN_WIDTH = 2;
 float STARTING_AXON_VARIABILITY = 1.0;
 float AXON_START_MUTABILITY = 0.0005;
+float lossPerLayer = 1; //chomp lost by layer of neurons added
 
 boolean enableRadioactivity = true;
 int radioactiveNumber = 20; // number of highly mutated creatures
@@ -1864,7 +1865,7 @@ public void saveFunc(File file, boolean light){
 
 public void saveToJson(JsonGenerator g, boolean light){
   try{
-    g.writeNumberField("version", 5);
+    g.writeNumberField("version", 6);
     g.writeNumberField("seed", SEED);
     g.writeNumberField("foodChange", foodAngleChange);
     g.writeNumberField("giftForChompSec", giftForChompSec);
@@ -1951,7 +1952,7 @@ public void loadFromJson(JsonParser p){
       JsonToken token = p.nextToken();
       if(fieldName.equals("seed")){ SEED = p.getIntValue(); }
       else if(fieldName.equals("version")){
-        if(p.getFloatValue() < 5){ println("WARNING file may be incompatible"); }
+        if(p.getFloatValue() < 6){ println("WARNING file may be incompatible"); }
       }
       else if(fieldName.equals("foodChange")){ foodAngleChange = p.getFloatValue(); }
       else if(fieldName.equals("gen")){ gen = p.getIntValue(); genSelected = gen; }

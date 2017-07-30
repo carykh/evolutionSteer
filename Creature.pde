@@ -346,7 +346,7 @@ class Creature {
     if(hasNodeOffGround){
       float withinChomp = max(1.0-this.getCurrentFoodDistance()/this.startingFoodDistance,0);
       if(withinChomp >= 1){ withinChomp = 0.99; }
-      float loss = (this.brain.BRAIN_WIDTH - 2)*(float)0.05; // loss function for brain width
+      float loss = (this.brain.BRAIN_WIDTH - 2)*lossPerLayer; // loss function for brain width
       float fit = chomps+withinChomp-loss;//cumulativeAngularVelocity/(n.size()-2)/pow(averageNodeNausea,0.3);//   /(2*PI)/(n.size()-2); //dist(0,0,averageX,averageZ)*0.2; // Multiply by 0.2 because a meter is 5 units for some weird reason.
       if(fit >= maxChomp){ fit = maxChomp; }
       return fit;

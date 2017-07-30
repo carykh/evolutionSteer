@@ -110,7 +110,11 @@ class Brain {
         for(int input = 0; input < BRAIN_HEIGHT; input++){
           total += neurons[x-1][input]*axons[x-1][input][y].weight;
         }
-        neurons[x][y] = sigmoid(total);
+        if(x == BRAIN_WIDTH - 1){
+          neurons[x][y] = sigmoid(total);
+        } else {
+          neurons[x][y] = linear(total);
+        }
       }
     }
     for(int i = 0; i < n.size(); i++){
@@ -118,6 +122,17 @@ class Brain {
     }
     for(int i = 0; i < m.size(); i++){
       m.get(i).brainOutput = neurons[BRAIN_WIDTH-1][n.size()+i];
+    }
+  }
+  public float linear(float input){
+    if(input >= -5 || input <= 5){
+      return input/5;
+    }
+    else if(input < -5){
+      return -1;
+    }
+    else{
+      return 1;
     }
   }
   public float sigmoid(float input){
@@ -153,14 +168,14 @@ class Brain {
     for(int x = 0; x < BRAIN_WIDTH; x++){
         for(int y = 0; y < BRAIN_HEIGHT; y++){
           for(int z = 0; z < BRAIN_HEIGHT; z++){
-            if(x == BRAIN_WIDTH - 1){ 
+            if(x == 0){ 
               if(y == z){
-                extaxons[x][y][z] = new Axon(2.0,AXON_START_MUTABILITY);
+                extaxons[x][y][z] = new Axon(5.0,AXON_START_MUTABILITY);
               } else {
                 extaxons[x][y][z] = new Axon(0.0,AXON_START_MUTABILITY);
               }
             }
-            else{ extaxons[x][y][z] = axons[x][y][z].copyAxon(); }
+            else{ extaxons[x][y][z] = axons[x-1][y][z].copyAxon(); }
           }
         }
       }
