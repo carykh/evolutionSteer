@@ -13,19 +13,22 @@ class Creature {
   float foodY = 0;
   float foodZ = 0;
   int chomps = 0;
+  float timePerChomp = 0;
   float averageX = 0;
   float averageY = 0;
   float averageZ = 0;
   float energy = baselineEnergy;
   float startingFoodDistance = 9999;
+  int lastChompTime = 0;
   
-  Creature(int[] tname, int tid, ArrayList<Node> tn, ArrayList<Muscle> tm, float td, boolean talive, float tmut, Brain newBrain, float[][] tfoodpos) {
+  Creature(int[] tname, int tid, ArrayList<Node> tn, ArrayList<Muscle> tm, float tmut, Brain newBrain, float[][] tfoodpos) {
     this.id = tid;
     this.m = tm;
     this.n = tn;
-    this.d = td;
-    this.alive = talive;
+    this.d = 0;
+    this.alive = true;
     this.mutability = tmut;
+    this.initParameters();
     if(newBrain != null){
       this.brain = newBrain;
     }else{
@@ -40,19 +43,28 @@ class Creature {
     }
     if(tfoodpos == null){
       for(int i = 0; i < maxChomp; i++){
-        this.foodPositions[i][0] = random(-foodAngleChange,foodAngleChange);
+        if(i < angleMultiplier.length){
+          this.foodPositions[i][0] = angleMultiplier[i]*random(-foodAngleChange,foodAngleChange);
+        } else {
+          this.foodPositions[i][0] = random(-foodAngleChange,foodAngleChange);
+        }
         this.foodPositions[i][1] = random(-1.2,-0.55);
         this.foodPositions[i][2] = random(0,1);
       }
-    }else{
+    } else {
       this.foodPositions = tfoodpos.clone();
     }
   }
+  void initParameters(){
+    this.chomps = 0;
+    this.lastChompTime = 0;
+    this.timePerChomp = 0;
+  }
   int getBrainHeight(){
-    return this.n.size()+this.m.size()+2;
+    return this.n.size()+this.m.size()+3;
   }
   void changeBrainStructure(int rowInsertionIndex, int rowRemovalIndex){
-    this.brain.changeBrainStructure(this.brain.BRAIN_WIDTH, this.getBrainHeight(), rowInsertionIndex,rowRemovalIndex);
+    this.brain.changeBrainStructure(this.brain.BRAIN_WIDTH, this.getBrainHeight(), rowInsertionIndex, rowRemovalIndex);
   }
   Creature modified(int id, float mutationFactor) {
     float modMut;
@@ -99,8 +111,7 @@ class Creature {
     } else {
         newMut = min(mutability*random((float)0.8, (float)1.25), 2);
     }
-    Creature modifiedCreature = new Creature(newName, id, 
-    newN, newM, 0, true, newMut, tmpBrain,null);
+    Creature modifiedCreature = new Creature(newName, id, newN, newM, newMut, tmpBrain, null);
     if (bigMutAddNode) { //Add a node
       modifiedCreature.addRandomNode();
     }
@@ -267,8 +278,12 @@ class Creature {
     if(withUsableBrain){
       newBrain = this.brain.getUsableCopyOfBrain();
     }
-    return new Creature(this.name, newID, n2, m2, this.d, this.alive,
-                        this.mutability,newBrain,newFoodPositions);
+    Creature copiedCreature = new Creature(this.name, newID, n2, m2, this.mutability, newBrain, newFoodPositions);
+    copiedCreature.d = this.d;
+    copiedCreature.chomps = this.chomps;
+    copiedCreature.timePerChomp = this.timePerChomp;
+    copiedCreature.alive = this.alive;
+    return copiedCreature;
   }
   void drawCreature(PGraphics img, Boolean putInFrontOfBack) {
     if(putInFrontOfBack && false){
@@ -307,6 +322,7 @@ class Creature {
     this.averageZ = this.averageZ/this.n.size();
   }
   void calculateNextFoodLocation() {
+    if(this.chomps >= maxChomp){ return; }
     this.setAverages();
     this.foodAngle += this.foodPositions[chomps][0];
     float sinA = sin(this.foodAngle);
@@ -346,10 +362,26 @@ class Creature {
     if(hasNodeOffGround){
       float withinChomp = max(1.0-this.getCurrentFoodDistance()/this.startingFoodDistance,0);
       if(withinChomp >= 1){ withinChomp = 0.99; }
+      float chompfit;
+      if(this.chomps >= maxChomp){ chompfit = this.chomps; }
+      else { chompfit = this.chomps+withinChomp; }
+      
+      float speedfit = 0;
+      if(this.chomps > 0){
+        timePerChomp = float(lastChompTime/frames)/float(this.chomps);
+        if(this.chomps > angleMultiplier.length){
+          if(lastChompTime/frames <= 1){ speedfit = 0; }
+          else if(timePerChomp < 1 && lastChompTime > 0){ speedfit = timePerChompWeight; }
+          else if(timePerChomp > timePerChompWeight/timePerChompSlope+1){ speedfit = 0; }
+          else if(lastChompTime == 0 || timePerChomp == 0){ speedfit = 0; }
+          else{ speedfit = -timePerChompSlope*(timePerChomp-(timePerChompWeight/timePerChompSlope)-1); }
+        }
+      }
+      
       float loss = (this.brain.BRAIN_WIDTH - 2)*lossPerLayer; // loss function for brain width
-      float fit = chomps+withinChomp-loss;//cumulativeAngularVelocity/(n.size()-2)/pow(averageNodeNausea,0.3);//   /(2*PI)/(n.size()-2); //dist(0,0,averageX,averageZ)*0.2; // Multiply by 0.2 because a meter is 5 units for some weird reason.
-      if(fit >= maxChomp){ fit = maxChomp; }
-      return fit;
+      if(this.chomps >= maxChomp/2){ loss = 0; }
+      
+      return 100*(chompfit+speedfit-loss)/(maxChomp+timePerChompWeight);
     }else{
       return 0;
     }
@@ -382,9 +414,9 @@ class Creature {
       float distFromFood = dist(ni.x,ni.y,ni.z,this.foodX,this.foodY,this.foodZ);
       if(distFromFood <= 0.4){
         this.chomps++;
+        lastChompTime = this.brain.timesUsed;
         hasEaten = true;
-        if(chomps >= maxChomp){ chomps = maxChomp; }
-        else { this.calculateNextFoodLocation(); }
+        this.calculateNextFoodLocation();
       }
     }
     return hasEaten;
@@ -397,6 +429,8 @@ class Creature {
       else { g.writeNumberField("id", overwriteId); }
       g.writeBooleanField("alive", alive);
       g.writeNumberField("mutability", mutability);
+      g.writeNumberField("chomps", chomps);
+      g.writeNumberField("timePerChomp", timePerChomp);
       g.writeArrayFieldStart("name");g.writeNumber(name[0]);g.writeNumber(name[1]);g.writeEndArray();
       if(n != null){
         g.writeArrayFieldStart("nodes");
@@ -424,6 +458,8 @@ class Creature {
          String fieldName = p.getCurrentName();
          JsonToken token = p.nextToken();
          if(fieldName.equals("d")){ d = p.getFloatValue(); }
+         if(fieldName.equals("chomps")){ chomps = p.getIntValue(); }
+         if(fieldName.equals("timePerChomp")){ timePerChomp = p.getFloatValue(); }
          else if(fieldName.equals("id")){ id = p.getIntValue(); }
          else if(fieldName.equals("alive")){ alive = p.getBooleanValue(); }
          else if(fieldName.equals("mutability")){ mutability = p.getFloatValue(); }

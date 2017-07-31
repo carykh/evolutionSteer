@@ -1,6 +1,6 @@
 class Brain {
   float heartbeatInterval = (float)(Math.PI/12);
-  float timesUsed;
+  int timesUsed;
   float[][] neurons;
   Axon[][][] axons;
   int BRAIN_WIDTH = 0;
@@ -102,6 +102,7 @@ class Brain {
     }
     
     neurons[0][n.size()+m.size()] = sin(heartbeatInterval*timesUsed);
+    neurons[0][n.size()+m.size()+1] = cos(2*heartbeatInterval*timesUsed);
     timesUsed += 1;
     
     for(int x = 1; x < BRAIN_WIDTH; x++){
@@ -111,7 +112,7 @@ class Brain {
           total += neurons[x-1][input]*axons[x-1][input][y].weight;
         }
         if(x == BRAIN_WIDTH - 1){
-          neurons[x][y] = sigmoid(total);
+          neurons[x][y] = sigmoidapprox(total);
         } else {
           neurons[x][y] = linear(total);
         }
@@ -136,8 +137,10 @@ class Brain {
     }
   }
   public float sigmoid(float input){
-    //return -1.0+(2.0/(1.0+pow(2.71828182846,-input)));
+    return -1.0+(2.0/(1.0+pow(2.71828182846,-input)));
     // Sigmoid centered on 0 and giving response between -1 and +1
+  }
+  public float sigmoidapprox(float input){
     if(input >= -1.1779 && input <= 1.1779){
        return 0.5*input;
     } else if(input >= -2.7537 && input < -1.1779){

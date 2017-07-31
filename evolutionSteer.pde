@@ -41,7 +41,11 @@ float hazelStairs = -1;
 float cumulativeAngularVelocity = 0;
 boolean saveFramesPerGeneration = true;
 color gridBGColor = color(220, 253, 102, 255);
-float foodAngleChange = 0.0;
+float foodAngleChange = PI;
+float[] angleMultiplier = { // angle increases progressively according to the values in this array
+  0.0326, 0.0526, 0.0839, 0.1312, 0.1993, 0.291, 0.4036, 0.5273, 0.6478, 
+  0.752, 0.8333, 0.8918, 0.9315, 0.9573, 0.9736, 0.9838, 0.9901, 0.994
+};
 
 static int nbCreatures = 250; // please set even number
 int gridX = 25; // X * Y must be equal to nbCreatures !
@@ -82,14 +86,13 @@ float camHA = 0;
 float camVA = -0.5;
 int frames = 60;
 int simDuration = 15; // in seconds
-int jumperDuration = 1; // definition of jumper : chomp < this value (in seconds)
-int jumperTruncate = 12; // remove jumper limitation when giftForChompSec is < to this value
 int maxFrames = simDuration*frames;
 int maxSimulationFrames = maxFrames;
-int jumperFrames = jumperDuration*frames;
 float giftForChompSec = 15;
 int giftForChompFrames = ceil(giftForChompSec*frames);
-int maxChomp = 100; // maximum number of chomps before simulation ends
+int maxChomp = 50; // maximum number of chomps before simulation ends
+int timePerChompWeight = 20; // weight for creature speed in fitness calculation
+int timePerChompSlope = 2; // slope for speed in fitness calculation
 int menu = 0;
 int gen = -1;
 float sliderX = 1170;
@@ -129,7 +132,7 @@ int[] p = new int[29];
 final int BRAIN_WIDTH = 2;
 float STARTING_AXON_VARIABILITY = 1.0;
 float AXON_START_MUTABILITY = 0.0005;
-float lossPerLayer = 1; //chomp lost by layer of neurons added
+float lossPerLayer = 0.5; //chomp lost by layer of neurons added
 
 boolean enableRadioactivity = true;
 int radioactiveNumber = 20; // number of highly mutated creatures
@@ -347,8 +350,8 @@ void drawGraph(int graphWidth, int graphHeight) {
   graphImage.beginDraw();
   graphImage.background(220);
   if (gen >= 1) {
-    drawLines(130, int(graphHeight*0.05), graphWidth-130, int(graphHeight*0.9));
-    drawSegBars(130, 0, graphWidth-130, 150);
+    drawLines(80, int(graphHeight*0.05), graphWidth-80, int(graphHeight*0.9));
+    drawSegBars(80, 0, graphWidth-80, 150);
   }
   graphImage.endDraw();
 }
@@ -368,7 +371,7 @@ void drawLines(int x, int y, int graphWidth, int graphHeight) {
   for (float i = ceil((worst-(best-worst)/18.0)/unit)*unit; i < best+(best-worst)/18.0;i+=unit) {
     float lineY = y-i*meterHeight+zero;
     graphImage.line(x, lineY, graphWidth+x, lineY);
-    graphImage.text(showUnit(i, unit)+" "+fitnessUnit, x-5, lineY+4);
+    graphImage.text(showUnit(i, unit)+" %", x-5, lineY+4);
   }
   graphImage.stroke(0);
   for (int i = 0; i < 29; i++) {
@@ -879,17 +882,19 @@ void drawStatusWindow(boolean isFirstFrame) {
   }
   noStroke();
   fill(255);
-  rect(px-60, py, 120, 52);
+  rect(px-60, py, 120, 58);
   fill(0);
   textFont(font, 12);
   textAlign(CENTER);
-  text("#"+rank, px, py+12);
-  text("ID: "+cj.id, px, py+24);
-  text("Fitness: "+nf(cj.d, 0, 3), px, py+36);
+  text("#"+rank, px, py+10);
+  text("ID: "+cj.id, px, py+19);
+  text("Fitness: "+nf(cj.d, 0, 3), px, py+28);
+  text("Chomps: "+cj.chomps, px, py+37);
+  text("Time/Chomp: "+nf(cj.timePerChomp, 0, 3), px, py+46);
   colorMode(HSB, 1);
   int sp = (cj.n.size()%10)*10+(cj.m.size()%10);
   fill(getColor(sp, true));
-  text("Species: S"+(cj.n.size()%10)+""+(cj.m.size()%10), px, py+48);
+  text("Species: S"+(cj.n.size()%10)+""+(cj.m.size()%10), px, py+55);
   colorMode(RGB, 255);
   if (miniSimulation) {
     keysToMoveCamera();
@@ -1052,21 +1057,24 @@ void draw() {
       rect(990, 120, 230, 40);
       fill(0);
       //text("Survivor Bias: "+percentify(getSB(genSelected)), 437, 50);
-      text("Curve: ±"+nf(foodAngleChange/(2*PI)*360,0,2)+" degrees", 420, 110);
-      text("Gift: +"+nf(giftForChompSec)+" seconds", 470, 135);
-      if(enableRadioactivity){
-         text("Radioactive mode", 460, 85);
+      textAlign(RIGHT);
+      if(foodAngleChange < PI){
+        text("Curve: ±"+nf(foodAngleChange/(2*PI)*360,0,2)+" degrees", 700, 120);
       }
+      if(giftForChompSec < 15){
+        text("Gift: +"+nf(giftForChompSec)+" seconds", 700, 145);
+      }
+      if(enableRadioactivity){
+         text("Radioactive mode",700, 95);
+      }
+      textAlign(LEFT);
       text("Do 1 step-by-step generation.", 770, 50);
       text("Do 1 quick generation.", 770, 100);
       text("Do 1 gen ASAP.", 770, 150);
       text("Do gens ALAP.", 1000, 150);
-      text("Median "+fitnessName, 50, 160);
       text("Save", 620, 48);
       text("Light save", 435, 48);
-      textAlign(CENTER);
-      textAlign(RIGHT);
-      text(float(round(percentile.get(min(genSelected, percentile.size()-1))[14]*nbCreatures))/nbCreatures+" "+fitnessUnit, 700, 160);
+      text("Median fit : "+float(round(percentile.get(min(genSelected, percentile.size()-1))[14]*nbCreatures))/nbCreatures+"%", 50, 160);
       drawHistogram(760, 410, 460, 280);
       drawGraphImage();
       //if(saveFramesPerGeneration && gen > lastImageSaved){
@@ -1707,6 +1715,7 @@ void setGlobalVariables(Creature thisCreature) {
   totalNodeNausea = 0;
   averageNodeNausea = 0;
   cumulativeAngularVelocity = 0;
+  currentCreature.initParameters();
   currentCreature.calculateNextFoodLocation();
 }
 int[] getNewCreatureName(){
@@ -1740,6 +1749,8 @@ String rankify(int s){
 }
 void setFitness(int i){
   c[i].d = currentCreature.getFitness();
+  c[i].chomps = currentCreature.chomps;
+  c[i].timePerChomp = currentCreature.timePerChomp;
 }
 
 void brainiac(){
@@ -1809,7 +1820,7 @@ Creature createNewCreature(int index){
     float len = random(0.5,1.5);
     m.add(new Muscle(tc1, tc2, len, random(0.015, 0.06)));
   }
-  return new Creature(null, index+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 0, true, 1.0, null, null); 
+  return new Creature(null, index+1, new ArrayList<Node>(n), new ArrayList<Muscle>(m), 1.0, null, null); 
 }
 public void writeToErrorLog(Exception e){
       String[] error = new String[100];
@@ -1967,7 +1978,7 @@ public void loadFromJson(JsonParser p){
         if (token != JsonToken.START_ARRAY) { throw new IOException("Expected Array"); }
         while((token = p.nextToken()) != JsonToken.END_ARRAY){
           if (token == JsonToken.START_OBJECT){
-            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, null, null);
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 1.0, null, null);
             creature.loadFromJson(p);
             creatureDatabase.add(creature);
           }
@@ -2033,7 +2044,7 @@ public void loadFromJson(JsonParser p){
         int i = 0;
         while((token = p.nextToken()) != JsonToken.END_ARRAY){
           if (token == JsonToken.START_OBJECT){
-            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 0, false, 0, null, null);
+            Creature creature = new Creature(new int[2], 0, new ArrayList<Node>(),  new ArrayList<Muscle>(), 1.0, null, null);
             creature.loadFromJson(p);
             c[i] = creature;
             c2.add(c[i]);
