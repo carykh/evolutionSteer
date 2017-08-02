@@ -1,73 +1,78 @@
 class Node {
-  float x, y, z, vx, vy, vz, prevX, prevY, prevZ, pvx, pvy, pvz, m, f;
-  boolean safeInput;
-  float pressure;
+  float x, y, z, vx, vy, vz, prevX, prevY, prevZ, pvx, pvy, pvz, m, initf, f;
+  float pressure, brainOutput;
   Node(float tx, float ty, float tz,
   float tvx, float tvy, float tvz,
   float tm, float tf) {
-    prevX = x = tx;
-    prevY = y = ty;
-    prevZ = z = tz;
-    pvx = vx = tvx;
-    pvy = vy = tvy;
-    pvz = vz = tvz;
-    m = tm;
-    f = tf;
-    pressure = 0;
+    this.prevX = x = tx;
+    this.prevY = y = ty;
+    this.prevZ = z = tz;
+    this.pvx = vx = tvx;
+    this.pvy = vy = tvy;
+    this.pvz = vz = tvz;
+    this.m = tm;
+    this.initf = tf;
+    this.f = this.initf;
+    this.pressure = 0;
+    this.brainOutput = (2*this.initf)-1;
   }
   void applyForces() {
-    vx *= airFriction;
-    vy *= airFriction;
-    vz *= airFriction;
-    y += vy;
-    x += vx;
-    z += vz;
+    this.f = toNodeUsable();
+    this.vx *= airFriction;
+    this.vy *= airFriction;
+    this.vz *= airFriction;
+    this.y += vy;
+    this.x += vx;
+    this.z += vz;
     float acc = dist(vx,vy,vz,pvx,pvy,pvz);
     totalNodeNausea += acc*acc*nauseaUnit;
-    pvx = vx;
-    pvy = vy;
-    pvz = vz;
+    this.pvx = vx;
+    this.pvy = vy;
+    this.pvz = vz;
+  }
+  float toNodeUsable(){
+    return (this.brainOutput+1)/2;
   }
   void applyGravity() {
-    vy += gravity;
+    this.vy += gravity;
   }
   void pressAgainstGround(float groundY){
     float dif = y-(groundY-m/2);
-    pressure += dif*pressureUnit;
-    y = (groundY-m/2);
-    vy = 0;
-    x -= vx*f;
-    z -= vz*f;
-    if (vx > 0) {
-      vx -= f*dif*FRICTION;
-      if (vx < 0) {
-        vx = 0;
+    this.pressure += dif*pressureUnit;
+    this.y = (groundY-m/2);
+    this.vy = 0;
+    this.x -= vx*f;
+    this.z -= vz*f;
+    if (this.vx > 0) {
+      this.vx -= this.f*dif*FRICTION;
+      if (this.vx < 0) {
+        this.vx = 0;
       }
     } else {
-      vx += f*dif*FRICTION;
-      if (vx > 0) {
-        vx = 0;
+      this.vx += this.f*dif*FRICTION;
+      if (this.vx > 0) {
+        this.vx = 0;
       }
     }
-    if (vz > 0) {
-      vz -= f*dif*FRICTION;
-      if (vz < 0) {
-        vz = 0;
+    if (this.vz > 0) {
+      this.vz -= this.f*dif*FRICTION;
+      if (this.vz < 0) {
+        this.vz = 0;
       }
     } else {
-      vz += f*dif*FRICTION;
+      this.vz += this.f*dif*FRICTION;
       if (vz > 0) {
         vz = 0;
       }
     }
   }
   void hitWalls(Boolean addToAngular) {
-    pressure = 0;
+    this.pressure = 0;
     float dif = y+m/2;
     if (dif >= 0 && haveGround) {
       pressAgainstGround(0);
     }
-    if(y > prevY && hazelStairs >= 0){
+    if(this.y > this.prevY && hazelStairs >= 0){
       float bottomPointNow = y+m/2;
       float bottomPointPrev = prevY+m/2;
       int levelNow = (int)(ceil(bottomPointNow/hazelStairs));
@@ -141,36 +146,36 @@ class Node {
         }
       }
     }*/
-    prevY = y;
-    prevX = x;
+    this.prevY = this.y;
+    this.prevX = this.x;
   }
   Node copyNode() {
-    return (new Node(x, y, z, 0, 0, 0, m, f));
+    return (new Node(this.x, this.y, this.z, 0, 0, 0, this.m, this.f));
   }
   Node modifyNode(float mutability, int nodeNum) {
-    float newX = x+r()*0.5*mutability;
-    float newY = y+r()*0.5*mutability;
-    float newZ = z+r()*0.5*mutability;
+    float newX = this.x+r()*0.5*mutability;
+    float newY = this.y+r()*0.5*mutability;
+    float newZ = this.z+r()*0.5*mutability;
     //float newM = m+r()*0.1*mutability;
     //newM = min(max(newM, 0.3), 0.5);
     float newM = 0.4;
-    float newF = min(max(f+r()*0.1*mutability, 0), 1);
+    float newF = min(max(this.initf+r()*0.1*mutability, 0), 1);
     Node newNode = new Node(newX, newY, newZ, 0, 0, 0, newM, newF);
     return newNode;//max(m+r()*0.1,0.2),min(max(f+r()*0.1,0),1)
   }
   void drawNode(PGraphics img) {
     color c = color(0,0,0);
-    if (f <= 0.5) {
-      c = colorLerp(color(255,255,255),color(180,0,255),f*2);
+    if (this.f <= 0.5) {
+      c = colorLerp(color(255,255,255),color(180,0,255),this.f*2);
     }else{
-      c = colorLerp(color(180,0,255),color(0,0,0),f*2-1);
+      c = colorLerp(color(180,0,255),color(0,0,0),this.f*2-1);
     }
     img.fill(c);
     img.noStroke();
     img.lights();
     img.pushMatrix();
-    img.translate(x*scaleToFixBug, y*scaleToFixBug,z*scaleToFixBug);
-    img.sphere(m*scaleToFixBug*0.5);
+    img.translate(this.x*scaleToFixBug, this.y*scaleToFixBug,this.z*scaleToFixBug);
+    img.sphere(this.m*scaleToFixBug*0.5);
     img.popMatrix();
     //img.ellipse((ni.x+x)*scaleToFixBug, (ni.y+y)*scaleToFixBug, ni.m*scaleToFixBug, ni.m*scaleToFixBug);
     /*if(ni.f >= 0.5){
@@ -186,4 +191,43 @@ class Node {
   color colorLerp(color a, color b, float x){
     return color(red(a)+(red(b)-red(a))*x, green(a)+(green(b)-green(a))*x, blue(a)+(blue(b)-blue(a))*x);
   }
+  
+  public void saveToJson(JsonGenerator g){
+    try{
+      g.writeNumberField("x", this.x);
+      g.writeNumberField("y", this.y);
+      g.writeNumberField("z", this.z);
+      g.writeNumberField("vx", this.vx);
+      g.writeNumberField("vy", this.vy);
+      g.writeNumberField("vz", this.vz);
+      g.writeNumberField("m", this.m);
+      g.writeNumberField("f", this.initf);
+    } catch(Exception e){
+        writeToErrorLog(e);
+    }
+  }
+  
+  public void loadFromJson(JsonParser p){
+    try{
+       while(p.nextToken() != JsonToken.END_OBJECT){
+         String fieldName = p.getCurrentName();
+         p.nextToken();
+         if(fieldName.equals("x")){ this.x = p.getFloatValue(); }
+         else if(fieldName.equals("y")){ this.y = p.getFloatValue(); }
+         else if(fieldName.equals("z")){ this.z = p.getFloatValue(); }
+         else if(fieldName.equals("vx")){ this.vx = p.getFloatValue(); }
+         else if(fieldName.equals("vy")){ this.vy = p.getFloatValue(); }
+         else if(fieldName.equals("vz")){ this.vz = p.getFloatValue(); }
+         else if(fieldName.equals("m")){ this.m = p.getFloatValue(); }
+         else if(fieldName.equals("f")){ 
+           this.f = this.initf = p.getFloatValue();
+           this.brainOutput = (2*this.initf)-1;
+         }
+         else if(fieldName.equals("pressure")){ this.pressure = p.getFloatValue(); }
+       }
+    } catch(Exception e){
+      writeToErrorLog(e);
+    }
+  }
+
 }

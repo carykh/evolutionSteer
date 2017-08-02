@@ -1,0 +1,7 @@
+
+data/autosave\.gz
+data/*\.gz
+
+error\.log
+
+data/tempfile\.gz
